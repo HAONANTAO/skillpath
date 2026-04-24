@@ -1,0 +1,126 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --color-bg-base: #0a0a0f;
+  --color-bg-surface-1: #0f0f1a;
+  --color-bg-surface-2: #131320;
+  --color-bg-surface-3: #1a1a2e;
+  --color-bg-surface-4: #2a2a3d;
+  --color-border-subtle: #1e1e2e;
+  --color-border-default: #2a2a3d;
+  --color-border-strong: #4a4a68;
+  --color-border-focus: #7C6AF7;
+  --accent: #7C6AF7;
+  --accent-hover: #9b8cf9;
+  --accent-subtle: rgba(124,106,247,0.10);
+  --fg: #ffffff;
+  --fg-secondary: #c4c4d4;
+  --fg-muted: #7a7a94;
+  --color-purple-300: #bdb0fb;
+  --color-purple-400: #9b8cf9;
+  --color-purple-500: #7C6AF7;
+  --color-purple-700: #4e3fcf;
+  --color-gold-400: #fad48a;
+  --color-gold-500: #f7c66a;
+  --color-success: #34d399;
+  --color-error: #f87171;
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --tracking-tight: -0.02em;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --shadow-1: 0 4px 16px rgba(0,0,0,0.3);
+  --shadow-2: 0 8px 32px rgba(0,0,0,0.4);
+  --shadow-3: 0 16px 48px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 24px rgba(124,106,247,0.25);
+  --shadow-glow-sm: 0 0 12px rgba(124,106,247,0.2);
+  --z-sticky: 100;
+  --z-modal: 400;
+  --z-toast: 500;
+  --ease-out-expo: cubic-bezier(0.16,1,0.3,1);
+  --transition-fast: all 150ms ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--color-bg-base);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+#root { min-height: 100vh; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a3d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4a4a68; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(124,106,247,0.15); }
+  50%       { box-shadow: 0 0 36px rgba(124,106,247,0.35); }
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+.fade-up { opacity: 0; transform: translateY(24px); transition: opacity 600ms var(--ease-out-expo), transform 600ms var(--ease-out-expo); }
+.fade-up.visible { opacity: 1; transform: translateY(0); }
+.progress-bar-fill { animation: progressFill 0.8s var(--ease-out-expo) both; }
+
+/* Dashboard layout */
+.desktop-sidebar-wrapper { display: none; }
+@media (min-width: 769px) {
+  .desktop-sidebar-wrapper { display: block; }
+  .mobile-menu-btn { display: none !important; }
+  .mobile-logo { display: none !important; }
+}
+@media (max-width: 768px) {
+  .main-content { padding: 16px !important; }
+  .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .middle-grid { grid-template-columns: 1fr !important; }
+  .topbar-search { display: none !important; }
+  .mobile-menu-btn { display: flex !important; }
+  .mobile-logo { display: block !important; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr !important; }
+}
