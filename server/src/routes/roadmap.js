@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { protect } from '../middleware/auth.js'
 import { plannerNode } from '../agent/nodes/plannerNode.js'
+import LearningPath from '../models/LearningPath.js'
 
 const router = Router()
 
@@ -21,11 +22,27 @@ router.post('/generate', protect, async (req, res) => {
 
   try {
     const { roadmap } = await plannerNode({ topic, goal, weeks })
-    res.json({ roadmap })
+
+    const path = await LearningPath.create({
+      user:  req.user._id,
+      topic,
+      goal,
+      weeks,
+      nodes: roadmap,
+    })
+
+    res.json({ pathId: path._id, roadmap })
   } catch (err) {
     console.error('[plannerNode]', err.message)
     res.status(500).json({ message: 'Failed to generate roadmap', error: err.message })
   }
+})
+
+router.get('/my-paths', protect, async (req, res) => {
+  const paths = await LearningPath.find({ user: req.user._id })
+    .sort({ createdAt: -1 })
+    .select('topic goal weeks progress createdAt')
+  res.json({ paths })
 })
 
 export default router

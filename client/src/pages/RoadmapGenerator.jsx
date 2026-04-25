@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getToken } from '../services/authService.js'
 
 /* ── Icons ── */
 const Icon = ({ name, size=20, color='currentColor' }) => {
@@ -90,11 +91,22 @@ function WeekCard({ data, index, unlocked, completed }) {
   const [hovered, setHovered] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const isLocked = !unlocked
-  const diffColor = { Beginner:{bg:'rgba(52,211,153,0.12)',text:'#34d399'}, Intermediate:{bg:'rgba(124,106,247,0.12)',text:'#9b8cf9'}, Advanced:{bg:'rgba(247,198,106,0.12)',text:'#f7c66a'} }[data.difficulty] || { bg:'rgba(124,106,247,0.12)',text:'#9b8cf9' }
-  const progress = completed ? 100 : unlocked ? 35+index*8 : 0
+  const diff = (data.difficulty || '').toLowerCase()
+  const diffColor = {
+    beginner:     { bg:'rgba(52,211,153,0.12)',  text:'#34d399' },
+    intermediate: { bg:'rgba(124,106,247,0.12)', text:'#9b8cf9' },
+    advanced:     { bg:'rgba(247,198,106,0.12)', text:'#f7c66a' },
+  }[diff] || { bg:'rgba(124,106,247,0.12)', text:'#9b8cf9' }
+  const progress = completed ? 100 : unlocked ? 35 + index * 8 : 0
+  // API returns `topics`; keep `concepts` as fallback for template data
+  const tags = data.topics || data.concepts || []
+  const label = data.title || data.topic || ''
 
   return (
-    <div onMouseEnter={() => !isLocked && setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={() => !isLocked && setExpanded(e=>!e)}
+    <div
+      onMouseEnter={() => !isLocked && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => !isLocked && setExpanded(e => !e)}
       style={{ background:isLocked?'#0f0f1a':'#131320', border:`1px solid ${hovered?'#4a4a68':isLocked?'#1e1e2e':'#2a2a3d'}`, borderRadius:12, padding:20, cursor:isLocked?'default':'pointer', transition:'all 250ms var(--ease-out-expo)', transform:hovered&&!isLocked?'translateY(-2px)':'none', boxShadow:hovered&&!isLocked?'0 8px 32px rgba(0,0,0,0.5)':'0 2px 8px rgba(0,0,0,0.3)', opacity:isLocked?0.55:1, animation:`cardIn 0.4s var(--ease-out-expo) ${index*0.07}s both`, position:'relative', overflow:'hidden' }}>
       {!isLocked && !completed && <div style={{ position:'absolute',top:0,left:0,right:0,height:1,background:'linear-gradient(90deg,transparent,rgba(124,106,247,0.4),transparent)' }}/>}
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12 }}>
@@ -104,23 +116,34 @@ function WeekCard({ data, index, unlocked, completed }) {
           </div>
           <span style={{ fontSize:11,fontWeight:600,color:'#7a7a94',letterSpacing:'0.06em',textTransform:'uppercase' }}>Week {data.week}</span>
         </div>
-        <span style={{ fontSize:11,fontWeight:600,letterSpacing:'0.04em',textTransform:'uppercase',background:diffColor.bg,color:diffColor.text,padding:'3px 8px',borderRadius:4 }}>{data.difficulty}</span>
+        <span style={{ fontSize:11,fontWeight:600,letterSpacing:'0.04em',textTransform:'capitalize',background:diffColor.bg,color:diffColor.text,padding:'3px 8px',borderRadius:4 }}>{data.difficulty}</span>
       </div>
-      <div style={{ fontFamily:'var(--font-display)',fontSize:16,fontWeight:700,color:isLocked?'#3a3a52':'#fff',marginBottom:6 }}>{data.topic}</div>
-      <div style={{ display:'flex',alignItems:'center',gap:4,marginBottom:12 }}><Icon name="clock" size={12} color="#7a7a94"/><span style={{ fontSize:12,color:'#7a7a94' }}>{data.duration}</span></div>
-      {!isLocked && (
+
+      <div style={{ fontFamily:'var(--font-display)',fontSize:16,fontWeight:700,color:isLocked?'#3a3a52':'#fff',marginBottom:4 }}>{label}</div>
+      {data.description && !isLocked && (
+        <div style={{ fontSize:12,color:'#7a7a94',lineHeight:1.5,marginBottom:10 }}>{data.description}</div>
+      )}
+
+      {!isLocked && tags.length > 0 && (
         <div style={{ display:'flex',flexWrap:'wrap',gap:6,marginBottom:14 }}>
-          {data.concepts.slice(0, expanded ? undefined : 3).map((c,i) => (
+          {tags.slice(0, expanded ? undefined : 3).map((c, i) => (
             <span key={i} style={{ fontSize:12,color:'#c4c4d4',background:'#1a1a2e',border:'1px solid #2a2a3d',padding:'3px 8px',borderRadius:4 }}>{c}</span>
           ))}
-          {!expanded && data.concepts.length > 3 && <span style={{ fontSize:12,color:'#7a7a94',background:'#1a1a2e',border:'1px dashed #2a2a3d',padding:'3px 8px',borderRadius:4 }}>+{data.concepts.length-3} more</span>}
+          {!expanded && tags.length > 3 && (
+            <span style={{ fontSize:12,color:'#7a7a94',background:'#1a1a2e',border:'1px dashed #2a2a3d',padding:'3px 8px',borderRadius:4 }}>+{tags.length - 3} more</span>
+          )}
         </div>
       )}
-      {isLocked && <div style={{ display:'flex',flexWrap:'wrap',gap:6,marginBottom:14 }}>{data.concepts.map((_,i) => <span key={i} style={{ fontSize:12,color:'transparent',background:'#1e1e2e',padding:'3px 8px',borderRadius:4,minWidth:60+(i%3)*20 }}>{'░'.repeat(8)}</span>)}</div>}
+      {isLocked && (
+        <div style={{ display:'flex',flexWrap:'wrap',gap:6,marginBottom:14 }}>
+          {[1,2,3].map(i => <span key={i} style={{ fontSize:12,color:'transparent',background:'#1e1e2e',padding:'3px 8px',borderRadius:4,minWidth:60+(i%3)*20 }}>{'░'.repeat(8)}</span>)}
+        </div>
+      )}
+
       {!isLocked && (
         <div>
           <div style={{ display:'flex',justifyContent:'space-between',marginBottom:6 }}>
-            <span style={{ fontSize:11,color:'#7a7a94' }}>{completed?'Completed':progress>0?'In progress':'Not started'}</span>
+            <span style={{ fontSize:11,color:'#7a7a94' }}>{completed ? 'Completed' : progress > 0 ? 'In progress' : 'Not started'}</span>
             <span style={{ fontSize:11,color:completed?'#34d399':'var(--accent)',fontWeight:600 }}>{progress}%</span>
           </div>
           <div style={{ height:3,borderRadius:999,background:'#1e1e2e',overflow:'hidden' }}>
@@ -138,22 +161,40 @@ export default function RoadmapGenerator() {
   const [form, setForm] = useState({ topic:'', goal:'', weeks:6 })
   const [phase, setPhase] = useState('input')
   const [roadmap, setRoadmap] = useState([])
+  const [pathId, setPathId] = useState(null)
+  const [error, setError] = useState(null)
   const [layout, setLayout] = useState('grid')
   const resultRef = useRef(null)
 
   const canGenerate = form.topic.trim().length > 0
 
-  function handleGenerate() {
+  async function handleGenerate() {
     if (!canGenerate) return
     setPhase('loading')
-    const data = getRoadmap(form.topic, form.weeks)
-    setTimeout(() => {
-      setRoadmap(data); setPhase('result')
-      setTimeout(() => resultRef.current && window.scrollTo({ top: resultRef.current.offsetTop-20, behavior:'smooth' }), 100)
-    }, 3200)
+    setError(null)
+    try {
+      const token = getToken()
+      const res = await fetch('/api/roadmap/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ topic: form.topic, goal: form.goal, weeks: form.weeks }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || 'Failed to generate roadmap')
+      setRoadmap(data.roadmap)
+      setPathId(data.pathId)
+      setPhase('result')
+      setTimeout(() => resultRef.current && window.scrollTo({ top: resultRef.current.offsetTop - 20, behavior: 'smooth' }), 100)
+    } catch (err) {
+      setError(err.message)
+      setPhase('input')
+    }
   }
 
-  function handleReset() { setPhase('input'); setRoadmap([]) }
+  function handleReset() { setPhase('input'); setRoadmap([]); setPathId(null); setError(null) }
 
   const getCardState = (w) => ({ unlocked: w <= 2, completed: w === 1 })
 
@@ -230,6 +271,14 @@ export default function RoadmapGenerator() {
           </div>
         )}
 
+        {/* Error */}
+        {error && (
+          <div style={{ display:'flex',alignItems:'center',gap:10,background:'rgba(248,113,113,0.08)',border:'1px solid rgba(248,113,113,0.25)',borderRadius:10,padding:'12px 16px',marginTop:16,animation:'fadeUp 0.3s var(--ease-out-expo)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style={{ fontSize:13,color:'#f87171' }}>{error}</span>
+          </div>
+        )}
+
         {/* Generate button */}
         {phase === 'input' && (
           <div style={{ display:'flex',justifyContent:'center',marginTop:24,animation:'fadeUp 0.5s var(--ease-out-expo) 0.1s both' }}>
@@ -292,10 +341,10 @@ export default function RoadmapGenerator() {
             <div style={{ marginTop:32,textAlign:'center',padding:24,background:'#131320',border:'1px solid #2a2a3d',borderRadius:16 }}>
               <div style={{ fontFamily:'var(--font-display)',fontSize:18,fontWeight:700,color:'#fff',marginBottom:6 }}>Ready to start Week 1?</div>
               <div style={{ fontSize:14,color:'#7a7a94',marginBottom:20 }}>Your roadmap is ready. Start your first lesson and build momentum.</div>
-              <button onClick={() => navigate('/learn')} style={{ background:'linear-gradient(135deg,#7C6AF7,#9080f9)',border:'none',borderRadius:10,padding:'12px 28px',fontSize:15,fontWeight:700,fontFamily:'var(--font-display)',color:'#fff',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:8,transition:'all 200ms ease',boxShadow:'0 0 20px rgba(124,106,247,0.3)' }}
+              <button onClick={() => navigate('/learn', { state: { pathId, week: 1 } })} style={{ background:'linear-gradient(135deg,#7C6AF7,#9080f9)',border:'none',borderRadius:10,padding:'12px 28px',fontSize:15,fontWeight:700,fontFamily:'var(--font-display)',color:'#fff',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:8,transition:'all 200ms ease',boxShadow:'0 0 20px rgba(124,106,247,0.3)' }}
                 onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 8px 28px rgba(124,106,247,0.45)'}}
                 onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 0 20px rgba(124,106,247,0.3)'}}>
-                Start learning <Icon name="arrow" size={15}/>
+                Start Week 1 <Icon name="arrow" size={15}/>
               </button>
             </div>
           </div>
