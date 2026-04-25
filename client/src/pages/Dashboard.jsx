@@ -317,7 +317,11 @@ function PathCard({ title, tag, tagColor, progress, lessonsLeft, timeLeft, color
           </div>
         </div>
         <button
-          onClick={() => navigate('/learn')}
+          onClick={() => {
+            const savedPathId = localStorage.getItem('learn_pathId')
+            const savedWeek   = parseInt(localStorage.getItem('learn_week') || '1', 10)
+            navigate('/learn', savedPathId ? { state: { pathId: savedPathId, week: savedWeek } } : undefined)
+          }}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#7C6AF7', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease' }}
           onMouseEnter={e => e.currentTarget.style.background = '#9080f9'}
           onMouseLeave={e => e.currentTarget.style.background = '#7C6AF7'}

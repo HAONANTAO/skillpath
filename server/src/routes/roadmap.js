@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { protect } from '../middleware/auth.js'
 import { plannerNode } from '../agent/nodes/plannerNode.js'
+import { researcherNode } from '../agent/nodes/researcherNode.js'
 import LearningPath from '../models/LearningPath.js'
 
 const router = Router()
@@ -12,6 +13,7 @@ const GenerateSchema = z.object({
   weeks: z.number().int().min(2).max(12),
 })
 
+// POST /api/roadmap/generate
 router.post('/generate', protect, async (req, res) => {
   const parsed = GenerateSchema.safeParse(req.body)
   if (!parsed.success) {
@@ -38,11 +40,47 @@ router.post('/generate', protect, async (req, res) => {
   }
 })
 
+// GET /api/roadmap/my-paths
 router.get('/my-paths', protect, async (req, res) => {
   const paths = await LearningPath.find({ user: req.user._id })
     .sort({ createdAt: -1 })
     .select('topic goal weeks progress createdAt')
   res.json({ paths })
+})
+
+// GET /api/roadmap/:pathId
+router.get('/:pathId', protect, async (req, res) => {
+  const path = await LearningPath.findOne({ _id: req.params.pathId, user: req.user._id })
+  if (!path) return res.status(404).json({ message: 'Path not found' })
+  res.json({ path })
+})
+
+// POST /api/roadmap/:pathId/node/:nodeId/resources
+// nodeId = week number (1-based)
+router.post('/:pathId/node/:nodeId/resources', protect, async (req, res) => {
+  const week = parseInt(req.params.nodeId, 10)
+  if (isNaN(week) || week < 1) {
+    return res.status(400).json({ message: 'nodeId must be a valid week number' })
+  }
+
+  const path = await LearningPath.findOne({ _id: req.params.pathId, user: req.user._id })
+  if (!path) return res.status(404).json({ message: 'Path not found' })
+
+  const node = path.nodes.find(n => n.week === week)
+  if (!node) return res.status(404).json({ message: `Week ${week} not found in this path` })
+
+  try {
+    const { resources } = await researcherNode({ currentNode: node })
+
+    // Persist real resources back onto the node
+    node.resources = resources
+    await path.save()
+
+    res.json({ resources })
+  } catch (err) {
+    console.error('[researcherNode]', err.message)
+    res.status(500).json({ message: 'Failed to fetch resources', error: err.message })
+  }
 })
 
 export default router
