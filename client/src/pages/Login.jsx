@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { login as apiLogin, register as apiRegister, saveAuth } from '../services/authService.js'
 
 /* ── Icons ── */
 function EmailIcon() {
@@ -188,6 +189,7 @@ function LoginForm({ onSwitch }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState({})
+  const [apiError, setApiError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showForgot, setShowForgot] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -205,9 +207,17 @@ function LoginForm({ onSwitch }) {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); return }
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false); setSuccess(true)
-    setTimeout(() => navigate('/dashboard'), 1000)
+    setApiError(null)
+    try {
+      const { token, user } = await apiLogin(email, password)
+      saveAuth(token, user)
+      setSuccess(true)
+      setTimeout(() => navigate('/dashboard'), 900)
+    } catch (err) {
+      setApiError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (success) return (
@@ -232,6 +242,11 @@ function LoginForm({ onSwitch }) {
             <span onClick={()=>setShowForgot(true)} style={{ fontSize:'var(--text-sm)',color:'var(--fg-muted)',cursor:'pointer' }}>Forgot password?</span>
           </div>}
         />
+        {apiError && (
+          <div style={{ background:'rgba(248,113,113,0.08)',border:'1px solid rgba(248,113,113,0.25)',borderRadius:'var(--radius-md)',padding:'10px 14px',fontSize:'var(--text-sm)',color:'#f87171',marginBottom:12 }}>
+            {apiError}
+          </div>
+        )}
         <button type="submit" disabled={loading} style={{ width:'100%',background:'var(--accent)',color:'#fff',border:'none',borderRadius:'var(--radius-md)',fontFamily:'var(--font-sans)',fontSize:'var(--text-base)',fontWeight:'var(--weight-semibold)',padding:'13px 20px',cursor:loading?'not-allowed':'pointer',marginTop:8,transition:'background 150ms ease',opacity:loading?0.7:1 }}>
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
@@ -261,6 +276,7 @@ function RegisterForm({ onSwitch }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState({})
+  const [apiError, setApiError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -292,9 +308,17 @@ function RegisterForm({ onSwitch }) {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); return }
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1400))
-    setLoading(false); setSuccess(true)
-    setTimeout(() => navigate('/roadmap'), 1000)
+    setApiError(null)
+    try {
+      const { token, user } = await apiRegister(name, email, password)
+      saveAuth(token, user)
+      setSuccess(true)
+      setTimeout(() => navigate('/dashboard'), 900)
+    } catch (err) {
+      setApiError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (success) return (
@@ -323,6 +347,11 @@ function RegisterForm({ onSwitch }) {
               ))}
             </div>
             <span style={{ fontSize:'var(--text-xs)',color:strengthColor }}>{strengthLabel}</span>
+          </div>
+        )}
+        {apiError && (
+          <div style={{ background:'rgba(248,113,113,0.08)',border:'1px solid rgba(248,113,113,0.25)',borderRadius:'var(--radius-md)',padding:'10px 14px',fontSize:'var(--text-sm)',color:'#f87171',marginBottom:12 }}>
+            {apiError}
           </div>
         )}
         <button type="submit" disabled={loading} style={{ width:'100%',background:'var(--accent)',color:'#fff',border:'none',borderRadius:'var(--radius-md)',fontFamily:'var(--font-sans)',fontSize:'var(--text-base)',fontWeight:'var(--weight-semibold)',padding:'13px 20px',cursor:loading?'not-allowed':'pointer',marginTop:8,opacity:loading?0.7:1 }}>
