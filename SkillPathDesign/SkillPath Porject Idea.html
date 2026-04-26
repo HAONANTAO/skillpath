@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<!-- saved from url=(0061)file:///Users/aarontao/Downloads/skillpath-plan-v2%20(1).html -->
+<html lang="zh"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillPath · 完整项目计划 v2</title>
+<link href="./SkillPath · 完整项目计划 v2_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --surface3: #252535;
+    --border: #2a2a3e;
+    --border-soft: #1f1f2e;
+    --accent: #7c6af7;
+    --accent2: #f7c66a;
+    --accent3: #6af7c4;
+    --accent4: #f76ab8;
+    --danger: #f76a8a;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --dim: #4a4a6a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,106,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,247,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    right: -200px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(124,106,247,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (min-width: 768px) {
+    .container { padding: 0 24px 80px; }
+  }
+
+  /* HEADER */
+  header {
+    padding: 56px 0 40px;
+  }
+
+  @media (min-width: 768px) {
+    header { padding: 72px 0 48px; }
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(40px, 10vw, 72px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .version-badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 3px 9px;
+    background: rgba(247,198,106,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(247,198,106,0.3);
+    border-radius: 4px;
+    margin-left: 12px;
+    vertical-align: middle;
+  }
+
+  h1 .gradient {
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(16px, 4vw, 20px);
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 8px;
+  }
+
+  .tagline {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 20px;
+    padding-left: 14px;
+    border-left: 2px solid var(--accent);
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .meta-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .meta-tag strong {
+    color: var(--text);
+    font-weight: 600;
+    margin-left: 4px;
+  }
+
+  /* CHANGES BOX */
+  .changes-box {
+    background: rgba(247,198,106,0.05);
+    border: 1px solid rgba(247,198,106,0.2);
+    border-left: 3px solid var(--accent2);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-top: 28px;
+  }
+
+  .changes-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .changes-list {
+    list-style: none;
+  }
+
+  .changes-list li {
+    font-size: 13px;
+    color: var(--text);
+    padding: 5px 0;
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .changes-list li::before {
+    content: '+';
+    position: absolute;
+    left: 0;
+    color: var(--accent2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+  }
+
+  /* SECTION */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 56px 0 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .section-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(20px, 5vw, 28px);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .section-subtitle {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* PITCH */
+  .pitch-box {
+    background: linear-gradient(135deg, rgba(124,106,247,0.08) 0%, rgba(247,198,106,0.04) 100%);
+    border: 1px solid rgba(124,106,247,0.25);
+    border-radius: 14px;
+    padding: 24px 24px;
+    margin-top: 20px;
+  }
+
+  @media (min-width: 768px) {
+    .pitch-box { padding: 28px 32px; }
+  }
+
+  .pitch-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .pitch-text {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(15px, 4vw, 18px);
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .pitch-text .highlight {
+    color: var(--accent2);
+    font-style: italic;
+  }
+
+  /* AI WORKFLOW */
+  .ai-workflow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  @media (min-width: 640px) {
+    .ai-workflow { grid-template-columns: 1fr 1fr; }
+  }
+
+  .ai-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ai-card.claude-code {
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(124,106,247,0.04) 100%);
+    border-color: rgba(124,106,247,0.3);
+  }
+
+  .ai-card.claude-design {
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(247,106,184,0.04) 100%);
+    border-color: rgba(247,106,184,0.3);
+  }
+
+  .ai-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .ai-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .claude-code .ai-card-icon {
+    background: rgba(124,106,247,0.15);
+    border: 1px solid rgba(124,106,247,0.3);
+  }
+
+  .claude-design .ai-card-icon {
+    background: rgba(247,106,184,0.15);
+    border: 1px solid rgba(247,106,184,0.3);
+  }
+
+  .ai-card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .ai-card-role {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .ai-card-body {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+
+  .ai-card-usage {
+    list-style: none;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .ai-card-usage li {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+
+  .ai-card-usage li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  /* FEATURES */
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  @media (min-width: 560px) {
+    .features-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (min-width: 860px) {
+    .features-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .feature-card:hover::before { opacity: 1; }
+  .feature-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+  }
+
+  .feature-number {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .feature-icon {
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
+
+  .feature-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  .feature-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .feature-modules {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent3);
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+
+  /* COST CONTROL */
+  .cost-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+  }
+
+  .cost-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cost-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(247,106,138,0.1);
+    border: 1px solid rgba(247,106,138,0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .cost-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .cost-subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .cost-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  @media (min-width: 640px) {
+    .cost-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .cost-item {
+    padding: 14px 16px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 2px solid var(--accent);
+  }
+
+  .cost-item-title {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .cost-item-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .cost-item-code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent3);
+    margin-top: 6px;
+  }
+
+  .cost-budget {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(106,247,196,0.08), rgba(124,106,247,0.05));
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .cost-budget strong {
+    color: var(--accent3);
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* MOBILE DESIGN */
+  .mobile-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  @media (min-width: 640px) {
+    .mobile-box { grid-template-columns: 140px 1fr; }
+  }
+
+  .mobile-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .phone-mockup {
+    width: 100px;
+    height: 180px;
+    border: 2px solid var(--accent);
+    border-radius: 18px;
+    position: relative;
+    background: linear-gradient(180deg, var(--surface2), var(--surface3));
+    overflow: hidden;
+  }
+
+  .phone-mockup::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  .phone-screen {
+    position: absolute;
+    inset: 18px 8px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .phone-line {
+    height: 6px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    border-radius: 3px;
+    opacity: 0.6;
+  }
+
+  .phone-line:nth-child(1) { width: 70%; }
+  .phone-line:nth-child(2) { width: 90%; }
+  .phone-line:nth-child(3) { width: 60%; background: linear-gradient(90deg, var(--accent3), transparent); }
+  .phone-line:nth-child(4) { width: 85%; }
+  .phone-line:nth-child(5) { width: 75%; background: linear-gradient(90deg, var(--accent2), transparent); }
+
+  .mobile-content h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .mobile-points {
+    list-style: none;
+  }
+
+  .mobile-points li {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px 0;
+    padding-left: 18px;
+    position: relative;
+  }
+
+  .mobile-points li::before {
+    content: '📱';
+    position: absolute;
+    left: 0;
+    font-size: 11px;
+  }
+
+  .mobile-points li strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* TECH STACK */
+  .tech-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  @media (min-width: 640px) {
+    .tech-layout { grid-template-columns: 1fr 1fr; }
+  }
+
+  .tech-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .tech-group-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tech-group-title::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .tech-list {
+    list-style: none;
+  }
+
+  .tech-list li {
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--border-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .tech-list li:last-child { border-bottom: none; }
+
+  .tech-name { color: var(--text); font-weight: 500; }
+  .tech-role { color: var(--muted); font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
+
+  .tech-reuse, .tech-new {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 8px;
+  }
+
+  .tech-reuse {
+    background: rgba(106,247,196,0.1);
+    color: var(--accent3);
+    border: 1px solid rgba(106,247,196,0.2);
+  }
+
+  .tech-new {
+    background: rgba(247,198,106,0.1);
+    color: var(--accent2);
+    border: 1px solid rgba(247,198,106,0.2);
+  }
+
+  /* AGENT FLOW */
+  .flow-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    margin-top: 20px;
+  }
+
+  .flow-step {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--border-soft);
+  }
+
+  .flow-step:last-child { border-bottom: none; }
+
+  .flow-num {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(124,106,247,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .flow-body { flex: 1; min-width: 0; }
+
+  .flow-title {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .flow-desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .flow-tech {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent3);
+    margin-top: 6px;
+    word-break: break-word;
+  }
+
+  /* TIMELINE */
+  .timeline-container {
+    display: grid;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .week-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    transition: border-color 0.2s;
+  }
+
+  @media (min-width: 640px) {
+    .week-card { grid-template-columns: 90px 1fr; gap: 18px; padding: 20px 22px; }
+  }
+
+  .week-card:hover { border-color: var(--accent); }
+
+  .week-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+
+  .week-label .week-num {
+    display: block;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  .week-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .week-tasks {
+    list-style: none;
+  }
+
+  .week-tasks li {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 3px 0;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.65;
+  }
+
+  .week-tasks li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .week-tasks li strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .week-tasks li.ai-task::before {
+    content: '✦';
+    color: var(--accent4);
+  }
+
+  .week-deliverable {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: rgba(106,247,196,0.05);
+    border-left: 2px solid var(--accent3);
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--accent3);
+  }
+
+  .week-deliverable strong { color: var(--text); font-weight: 500; }
+
+  /* MILESTONES */
+  .milestone-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-top: 20px;
+  }
+
+  .milestone-item {
+    display: flex;
+    gap: 14px;
+    padding: 10px 0;
+    font-size: 13px;
+    align-items: flex-start;
+  }
+
+  .milestone-check {
+    flex-shrink: 0;
+    color: var(--accent3);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+  }
+
+  .milestone-text { color: var(--text); }
+  .milestone-text strong { color: var(--accent2); font-weight: 600; }
+
+  /* RESUME */
+  .resume-box {
+    background: linear-gradient(135deg, rgba(247,198,106,0.06) 0%, rgba(124,106,247,0.04) 100%);
+    border: 1px solid rgba(247,198,106,0.25);
+    border-left: 3px solid var(--accent2);
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin-top: 20px;
+  }
+
+  .resume-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    color: var(--accent2);
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+
+  .resume-bullet {
+    font-size: 13px;
+    color: var(--text);
+    padding: 6px 0;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.7;
+  }
+
+  .resume-bullet::before {
+    content: '▪';
+    position: absolute;
+    left: 0;
+    color: var(--accent2);
+  }
+
+  .resume-bullet strong { color: var(--accent3); }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    text-align: center;
+  }
+
+  /* FADE IN */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="fade-in visible">
+    <div class="eyebrow">// Project Plan · for Aaron</div>
+    <h1><span class="gradient">SkillPath</span><span class="version-badge">v2</span></h1>
+    <div class="subtitle">Your AI Learning Coach</div>
+    <div class="tagline">
+      AI 辅助开发 × 真实上线产品 × 手机端友好 × 成本可控
+    </div>
+    <div class="meta-row">
+      <span class="meta-tag">开发周期 <strong>6-7 周</strong></span>
+      <span class="meta-tag">技术栈 <strong>MERN + LangGraph</strong></span>
+      <span class="meta-tag">开发 <strong>Claude Code</strong></span>
+      <span class="meta-tag">设计 <strong>Claude Artifacts</strong></span>
+      <span class="meta-tag">平台 <strong>响应式 Web</strong></span>
+      <span class="meta-tag">模式 <strong>开放注册 + 成本控制</strong></span>
+    </div>
+
+    <!-- v2 changes -->
+    <div class="changes-box">
+      <div class="changes-label">▲ v2 更新内容</div>
+      <ul class="changes-list">
+        <li><strong>Claude Code 全程辅助开发</strong> —— 从项目骨架到测试用例，AI 协作方式成为简历亮点</li>
+        <li><strong>Claude Artifacts 前置设计</strong> —— 开发前先用 Claude 生成 UI Mockup，避免返工</li>
+        <li><strong>响应式 Web</strong> —— 移动优先设计，手机打开即用，不做原生 App</li>
+        <li><strong>开放注册 + 完整成本控制系统</strong> —— Token 配额、速率限制、异常监控</li>
+        <li><strong>用户反馈闭环</strong> —— 内嵌反馈组件 + 使用数据追踪</li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- 01 PROJECT OVERVIEW -->
+  <div class="section-header fade-in visible">
+    <span class="section-num">01</span>
+    <span class="section-title">项目定位</span>
+    <span class="section-subtitle">Elevator Pitch</span>
+  </div>
+
+  <div class="pitch-box fade-in visible">
+    <div class="pitch-label">⚡ One Liner</div>
+    <div class="pitch-text">
+      SkillPath 是一个<span class="highlight">个性化学习 Agent</span> —— 你告诉它想学什么，它帮你规划路径、找资源、出测验，并根据表现<span class="highlight">动态调整</span>。真实上线，朋友可以注册使用，<span class="highlight">手机打开即可学习</span>。
+    </div>
+  </div>
+
+  <!-- 02 AI-POWERED WORKFLOW -->
+  <div class="section-header fade-in visible">
+    <span class="section-num">02</span>
+    <span class="section-title">AI 协作开发方式</span>
+    <span class="section-subtitle">Claude × Aaron</span>
+  </div>
+
+  <div class="ai-workflow fade-in visible">
+    <div class="ai-card claude-design">
+      <div class="ai-card-header">
+        <div class="ai-card-icon">🎨</div>
+        <div>
+          <div class="ai-card-title">Claude Artifacts</div>
+          <div class="ai-card-role">// Design Phase</div>
+        </div>
+      </div>
+      <div class="ai-card-body">
+        开发前用 Claude 对话生成高保真 UI 原型，避免"边写边改"的返工陷阱。设计稿直接作为 Cursor/Claude Code 的上下文。
+      </div>
+      <ul class="ai-card-usage">
+        <li>Week 0：生成 3–5 个核心页面 HTML 原型</li>
+        <li>每个功能开发前：先让 Claude 画 UI</li>
+        <li>Mobile / Desktop 双视图并行设计</li>
+        <li>Design Token 统一（颜色、字体、间距）</li>
+      </ul>
+    </div>
+
+    <div class="ai-card claude-code">
+      <div class="ai-card-header">
+        <div class="ai-card-icon">⚡</div>
+        <div>
+          <div class="ai-card-title">Claude Code</div>
+          <div class="ai-card-role">// Development Phase</div>
+        </div>
+      </div>
+      <div class="ai-card-body">
+        全程用 Claude Code 辅助写代码。核心原则：AI 写代码，你负责架构决策和代码审查。面试时能讲清楚每一行为什么这么写。
+      </div>
+      <ul class="ai-card-usage">
+        <li>让 Claude 写代码，自己必须能讲解</li>
+        <li>用 Claude 生成测试用例</li>
+        <li>调试时让 Claude 分析错误日志</li>
+        <li>重要功能手动重构一遍加深理解</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 03 CORE FEATURES -->
+  <div class="section-header fade-in visible">
+    <span class="section-num">03</span>
+    <span class="section-title">核心功能</span>
+    <span class="section-subtitle">Core Features</span>
+  </div>
+
+  <div class="features-grid fade-in visible">
+    <div class="feature-card">
+      <div class="feature-number">F01</div>
+      <div class="feature-icon">🗺️</div>
+      <div class="feature-title">智能学习路径</div>
+      <div class="feature-desc">输入主题+目标+时间，Agent 拆解为渐进式节点，可视化路径图</div>
+      <div class="feature-modules">任务规划 · CoT 推理</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-number">F02</div>
+      <div class="feature-icon">🔍</div>
+      <div class="feature-title">多源资源聚合</div>
+      <div class="feature-desc">自动搜索 YouTube、官方文档、博客、项目，按质量评分</div>
+      <div class="feature-modules">工具调用 · Tavily</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-number">F03</div>
+      <div class="feature-icon">📝</div>
+      <div class="feature-title">自适应测验</div>
+      <div class="feature-desc">每个节点生成针对性测验，错题进入"复习队列"</div>
+      <div class="feature-modules">动态决策 · 结构化输出</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-number">F04</div>
+      <div class="feature-icon">🧠</div>
+      <div class="feature-title">长期记忆系统</div>
+      <div class="feature-desc">Pinecone 存储用户学习档案：掌握度、薄弱点、学习风格</div>
+      <div class="feature-modules">长期记忆 · 向量检索</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-number">F05</div>
+      <div class="feature-icon">💬</div>
+      <div class="feature-title">学习伙伴对话</div>
+      <div class="feature-desc">基于当前学习阶段回答，不超纲也不低估</div>
+      <div class="feature-modules">上下文理解 · Memory</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-number">F06</div>
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">进度可视化</div>
+      <div class="feature-desc">学习热力图、掌握度雷达、错题分布</div>
+      <div class="feature-modules">Recharts · React</div>
+    </div>
+
+    <div class="feature-card" style="border-color: rgba(247,198,106,0.3); background: linear-gradient(135deg, var(--surface), rgba(247,198,106,0.03));">
+      <div class="feature-number" style="color: var(--accent2);">F07 · NEW</div>
+      <div class="feature-icon">💰</div>
+      <div class="feature-title">用户配额系统</div>
+      <div class="feature-desc">每用户每日 Token 限额，超出即限流，防止薅羊毛</div>
+      <div class="feature-modules" style="color: var(--accent2);">Rate Limiting · Cost Control</div>
+    </div>
+
+    <div class="feature-card" style="border-color: rgba(247,198,106,0.3); background: linear-gradient(135deg, var(--surface), rgba(247,198,106,0.03));">
+      <div class="feature-number" style="color: var(--accent2);">F08 · NEW</div>
+      <div class="feature-icon">📱</div>
+      <div class="feature-title">移动端优化</div>
+      <div class="feature-desc">移动优先设计，触摸友好，支持"添加到主屏幕"</div>
+      <div class="feature-modules" style="color: var(--accent2);">Mobile-First · PWA Ready</div>
+    </div>
+
+    <div class="feature-card" style="border-color: rgba(247,198,106,0.3); background: linear-gradient(135deg, var(--surface), rgba(247,198,106,0.03));">
+      <div class="feature-number" style="color: var(--accent2);">F09 · NEW</div>
+      <div class="feature-icon">📢</div>
+      <div class="feature-title">用户反馈闭环</div>
+      <div class="feature-desc">内嵌反馈按钮 + 使用事件追踪 + 错误上报</div>
+      <div class="feature-modules" style="color: var(--accent2);">PostHog / Sentry</div>
+    </div>
+  </div>
+
+  <!-- 04 MOBILE FIRST -->
+  <div class="section-header fade-in visible">
+    <span class="section-num">04</span>
+    <span class="section-title">手机端友好设计</span>
+    <span class="section-subtitle">Mobile-First Responsive</span>
+  </div>
+
+  <div class="mobile-box fade-in visible">
+    <div class="mobile-visual">
+      <div class="phone-mockup">
+        <div class="phone-screen">
+          <div class="phone-line"></div>
+          <div class="phone-line"></div>
+          <div class="phone-line"></div>
+          <div class="phone-line"></div>
+          <div class="phone-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mobile-content">
+      <h4>为什么不做原生 App？</h4>
+      <ul class="mobile-points">
+        <li><strong>技术 ROI 最优：</strong>响应式 Web 工作量 +20%，覆盖率 +80%</li>
+        <li><strong>部署最简单：</strong>无需 App Store 审核，改了立刻生效</li>
+        <li><strong>朋友愿意试：</strong>一个 URL 发过去就能用，没下载门槛</li>
+        <li><strong>面试 Demo 方便：</strong>面试官手机扫码就能体验</li>
+        <li><strong>核心技术点：</strong>Tailwind 断点、触摸手势、虚拟键盘适配、响应式图表</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 05 COST CONTROL -->
+  <div class="section-header fade-in visible">
+    <span class="section-num">05</span>
+    <span class="section-title">成本控制系统</span>
+    <span class="section-subtitle">Because Real Users Cost Money</span>
+  </div>
+
+  <div class="cost-section fade-in visible">
+    <div class="cost-header">
+      <div class="cost-icon">🛡️</div>
+      <div>
+        <div class="cost-title">四层防护架构</div>
+        <div class="cost-subtitle">Protect your OpenAI credits</div>
+      </div>
+    </div>
+
+    <div class="cost-grid">
+      <div class="cost-item">
+        <div class="cost-item-title">L1 · IP + 邮箱速率限制</div>
+        <div class="cost-item-desc">注册接口：同 IP 每天最多 3 个账号，防止批量注册</div>
+        <div class="cost-item-code">express-rate-limit · Redis counter</div>
+      </div>
+
+      <div class="cost-item">
+        <div class="cost-item-title">L2 · 用户 Token 配额</div>
+        <div class="cost-item-desc">免费用户每天 50K tokens（约 5 次路径生成），超出显示"明日再试"</div>
+        <div class="cost-item-code">MongoDB daily_usage collection</div>
+      </div>
+
+      <div class="cost-item">
+        <div class="cost-item-title">L3 · 模型分级调用</div>
+        <div class="cost-item-desc">简单任务用 GPT-4o-mini（$0.15/M），复杂规划才用 GPT-4o（$2.5/M）</div>
+        <div class="cost-item-code">动态 model router</div>
+      </div>
+
+      <div class="cost-item">
+        <div class="cost-item-title">L4 · 全局熔断</div>
+        <div class="cost-item-desc">每日 OpenAI 总花费 &gt;$2 自动关服务并邮件告警，避免失控</div>
+        <div class="cost-item-code">Cron + SendGrid</div>
+      </div>
+    </div>
+
+    <div class="cost-budget">
+      💡 <strong>预算目标：</strong>支持 100+ 注册用户、50 日活，OpenAI 月成本控制在 <strong>&lt;$30</strong>（配合 OpenAI 免费额度 + 分级调用，大概率能压到 $15 以内）
+    </div>
+  </div>
+
+  <!-- 06 AGENT FLOW -->
+  <div class="section-header fade-in visible">
+    <span class="section-num">06</span>
+    <span class="section-title">Agent 执行流程</span>
+    <span class="section-subtitle">LangGraph Runtime</span>
+  </div>
+
+  <div class="flow-container fade-in visible">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div class="flow-body">
+        <div class="flow-title">用户输入学习请求</div>
+        <div class="flow-desc">"我想 14 天内搞懂 React Hooks，每天 1 小时"</div>
+        <div class="flow-tech">Input → StateGraph.START · 配额检查</div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div class="flow-body">
+        <div class="flow-title">Planner Node —— 任务规划</div>
+        <div class="flow-desc">GPT-4o 分解为学习节点，Zod 验证结构化输出</div>
+        <div class="flow-tech">LLM + structured output · ~2000 tokens</div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div class="flow-body">
+        <div class="flow-title">Researcher Node —— 资源搜索</div>
+        <div class="flow-desc">并行调用 Tavily + YouTube，LLM 评分筛选 Top 3</div>
+        <div class="flow-tech">Parallel tool calls · ranking</div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <div class="flow-body">
+        <div class="flow-title">Memory 检索 —— 个性化调整</div>
+        <div class="flow-desc">从 Pinecone 查询用户薄弱点，调整内容难度</div>
+        <div class="flow-tech">Vector search · user namespace</div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-num">5</div>
+      <div class="flow-body">
+        <div class="flow-title">Quiz Node —— 测验生成</div>
+        <div class="flow-desc">基于学习内容 + 错题队列生成测验（JSON）</div>
+        <div class="flow-tech">GPT-4o-mini · conditional edge</div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-num">6</div>
+      <div class="flow-body">
+        <div class="flow-title">Evaluator Node —— 评估与决策</div>
+        <div class="flow-desc">正确率&lt;60% 回补资源，≥60% 前进。错题存入 Pinecone</div>
+        <div class="flow-tech">Conditional routing · memory write</div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-num">7</div>
+      <div class="flow-body">
+        <div class="flow-title">流式输出到前端</div>
+        <div class="flow-desc">SSE 实时推送，用户看到 Agent 思考过程</div>
+        <div class="flow-tech">streamEvents() → SSE → React</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 07 TECH STACK -->
+  <div class="section-header fade-in">
+    <span class="section-num">07</span>
+    <span class="section-title">技术栈</span>
+    <span class="section-subtitle">Full Stack</span>
+  </div>
+
+  <div class="tech-layout fade-in">
+    <div class="tech-group">
+      <div class="tech-group-title">前端 Frontend</div>
+      <ul class="tech-list">
+        <li><span><span class="tech-name">React 18</span><span class="tech-reuse">已会</span></span><span class="tech-role">UI 框架</span></li>
+        <li><span><span class="tech-name">Tailwind CSS</span><span class="tech-reuse">已会</span></span><span class="tech-role">样式 + 响应式</span></li>
+        <li><span><span class="tech-name">React Router</span><span class="tech-reuse">已会</span></span><span class="tech-role">路由</span></li>
+        <li><span><span class="tech-name">Recharts</span><span class="tech-new">新</span></span><span class="tech-role">数据图表</span></li>
+        <li><span><span class="tech-name">Zustand</span><span class="tech-new">新</span></span><span class="tech-role">状态管理</span></li>
+        <li><span><span class="tech-name">react-markdown</span><span class="tech-reuse">已会</span></span><span class="tech-role">富文本</span></li>
+      </ul>
+    </div>
+
+    <div class="tech-group">
+      <div class="tech-group-title">后端 Backend</div>
+      <ul class="tech-list">
+        <li><span><span class="tech-name">Node.js + Express</span><span class="tech-reuse">已会</span></span><span class="tech-role">API</span></li>
+        <li><span><span class="tech-name">LangChain.js</span><span class="tech-reuse">已用</span></span><span class="tech-role">LLM 框架</span></li>
+        <li><span><span class="tech-name">LangGraph.js</span><span class="tech-new">核心新</span></span><span class="tech-role">Agent 状态机</span></li>
+        <li><span><span class="tech-name">Zod</span><span class="tech-new">新</span></span><span class="tech-role">结构化输出</span></li>
+        <li><span><span class="tech-name">JWT + bcrypt</span><span class="tech-reuse">已会</span></span><span class="tech-role">认证</span></li>
+        <li><span><span class="tech-name">express-rate-limit</span><span class="tech-new">新</span></span><span class="tech-role">限流</span></li>
+      </ul>
+    </div>
+
+    <div class="tech-group">
+      <div class="tech-group-title">AI / Agent</div>
+      <ul class="tech-list">
+        <li><span><span class="tech-name">GPT-4o-mini</span><span class="tech-reuse">已用</span></span><span class="tech-role">主力模型</span></li>
+        <li><span><span class="tech-name">GPT-4o</span><span class="tech-new">新</span></span><span class="tech-role">复杂规划</span></li>
+        <li><span><span class="tech-name">text-embedding-3-small</span><span class="tech-reuse">已用</span></span><span class="tech-role">向量化</span></li>
+        <li><span><span class="tech-name">Tavily Search</span><span class="tech-new">新</span></span><span class="tech-role">搜索工具</span></li>
+        <li><span><span class="tech-name">LangSmith</span><span class="tech-new">新</span></span><span class="tech-role">Tracing</span></li>
+      </ul>
+    </div>
+
+    <div class="tech-group">
+      <div class="tech-group-title">存储 · 部署 · 监控</div>
+      <ul class="tech-list">
+        <li><span><span class="tech-name">MongoDB Atlas</span><span class="tech-reuse">已会</span></span><span class="tech-role">数据库</span></li>
+        <li><span><span class="tech-name">Pinecone</span><span class="tech-reuse">已会</span></span><span class="tech-role">向量库</span></li>
+        <li><span><span class="tech-name">Upstash Redis</span><span class="tech-new">新</span></span><span class="tech-role">限流计数</span></li>
+        <li><span><span class="tech-name">Render + Vercel</span><span class="tech-reuse">已会</span></span><span class="tech-role">部署</span></li>
+        <li><span><span class="tech-name">Sentry</span><span class="tech-new">新</span></span><span class="tech-role">错误监控</span></li>
+        <li><span><span class="tech-name">PostHog</span><span class="tech-new">新</span></span><span class="tech-role">用户分析</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 08 TIMELINE -->
+  <div class="section-header fade-in">
+    <span class="section-num">08</span>
+    <span class="section-title">7 周开发计划</span>
+    <span class="section-subtitle">Week-by-Week (含 Week 0 设计)</span>
+  </div>
+
+  <div class="timeline-container fade-in">
+    <div class="week-card" style="border-color: rgba(247,106,184,0.3);">
+      <div class="week-label" style="color: var(--accent4);">WEEK<span class="week-num">00</span></div>
+      <div>
+        <div class="week-title">Claude 设计冲刺 · 产品原型</div>
+        <ul class="week-tasks">
+          <li class="ai-task"><strong>用 Claude Artifacts</strong> 生成 5 个核心页面 HTML 原型（Landing / 路径生成 / 学习节点 / 测验 / Dashboard）</li>
+          <li class="ai-task"><strong>Mobile + Desktop 双版本</strong>都先用 Claude 设计好</li>
+          <li>确定 Design Token：主色、字体、间距规则</li>
+          <li>用 Claude 生成 Logo 和 Favicon（或 Midjourney）</li>
+          <li>注册域名（Namecheap / Porkbun，~$10/年）</li>
+          <li>申请 Tavily + OpenAI + LangSmith API Key</li>
+        </ul>
+        <div class="week-deliverable" style="background: rgba(247,106,184,0.05); border-color: var(--accent4); color: var(--accent4);"><strong>Deliverable：</strong>完整的设计原型文件，后续所有开发有明确参照</div>
+      </div>
+    </div>
+
+    <div class="week-card">
+      <div class="week-label">WEEK<span class="week-num">01</span></div>
+      <div>
+        <div class="week-title">基础骨架 + LangGraph.js 学习</div>
+        <ul class="week-tasks">
+          <li>搭建 MERN 项目骨架（monorepo：/client + /server）</li>
+          <li>用户注册/登录 JWT 认证（移动端友好的表单）</li>
+          <li class="ai-task"><strong>Claude Code 辅助</strong>生成基础 CRUD 路由</li>
+          <li>学习 LangGraph.js：跑通官方 "Chatbot with Memory" 教程</li>
+          <li>接入 LangSmith Tracing</li>
+          <li>Landing Page 上线（基于 Week 0 设计稿）</li>
+        </ul>
+        <div class="week-deliverable"><strong>Deliverable：</strong>Landing Page 已上线，有 URL 可分享</div>
+      </div>
+    </div>
+
+    <div class="week-card">
+      <div class="week-label">WEEK<span class="week-num">02</span></div>
+      <div>
+        <div class="week-title">Planner Node + 响应式 UI</div>
+        <ul class="week-tasks">
+          <li>设计 Zod Schema 定义路径结构</li>
+          <li>Planner Node：GPT-4o + structured output 生成路径</li>
+          <li>前端：路径生成界面（Mobile-first 断点设计）</li>
+          <li>路径可视化组件（桌面横向 / 手机纵向）</li>
+          <li class="ai-task"><strong>Claude Code</strong>生成 Mobile 适配的触摸友好组件</li>
+        </ul>
+        <div class="week-deliverable"><strong>Deliverable：</strong>输入主题 → 生成完整路径（手机打开完全可用）</div>
+      </div>
+    </div>
+
+    <div class="week-card">
+      <div class="week-label">WEEK<span class="week-num">03</span></div>
+      <div>
+        <div class="week-title">Researcher Node + 工具调用</div>
+        <ul class="week-tasks">
+          <li>封装 Tavily + YouTube Search Tool</li>
+          <li>Researcher Node：并行搜索 + 评分筛选</li>
+          <li>SSE Streaming：前端实时显示搜索进度（关键体验！）</li>
+          <li>资源卡片组件（响应式布局）</li>
+          <li class="ai-task"><strong>Claude Code</strong>生成 SSE 处理 Hook</li>
+        </ul>
+        <div class="week-deliverable"><strong>Deliverable：</strong>每个节点自动配优质资源 + 流式加载动画</div>
+      </div>
+    </div>
+
+    <div class="week-card">
+      <div class="week-label">WEEK<span class="week-num">04</span></div>
+      <div>
+        <div class="week-title">Quiz + Evaluator + Memory</div>
+        <ul class="week-tasks">
+          <li>Quiz Node：生成 5 道测验题</li>
+          <li>Evaluator Node：结果分析 + Conditional Edge</li>
+          <li>Pinecone 集成：错题向量化存储</li>
+          <li>Researcher 集成 Memory：先查记忆再搜索</li>
+          <li>答题界面（手机友好，支持单手操作）</li>
+        </ul>
+        <div class="week-deliverable"><strong>Deliverable：</strong>完整的"学习→测验→反馈→调整"闭环</div>
+      </div>
+    </div>
+
+    <div class="week-card" style="border-color: rgba(247,106,138,0.3);">
+      <div class="week-label" style="color: var(--danger);">WEEK<span class="week-num">05</span></div>
+      <div>
+        <div class="week-title">成本控制 + 用户体系 ⚠️ 关键周</div>
+        <ul class="week-tasks">
+          <li><strong>L1 限流：</strong>express-rate-limit + Upstash Redis</li>
+          <li><strong>L2 Token 配额：</strong>MongoDB daily_usage + 用户 Dashboard 显示余额</li>
+          <li><strong>L3 模型分级：</strong>动态 router 按任务复杂度选模型</li>
+          <li><strong>L4 熔断：</strong>每日总花费监控 + SendGrid 告警</li>
+          <li>接入 Sentry 错误监控 + PostHog 用户行为分析</li>
+          <li>写内测邀请说明 + Privacy Policy + Terms</li>
+        </ul>
+        <div class="week-deliverable" style="background: rgba(247,106,138,0.05); border-color: var(--danger); color: var(--danger);"><strong>Deliverable：</strong>上线前的最后防线，可以放心开放注册</div>
+      </div>
+    </div>
+
+    <div class="week-card">
+      <div class="week-label">WEEK<span class="week-num">06</span></div>
+      <div>
+        <div class="week-title">对话伙伴 + Dashboard + 反馈闭环</div>
+        <ul class="week-tasks">
+          <li>Chat Agent：注入学习上下文，不超纲</li>
+          <li>Dashboard：热力图 + 雷达图 + 进度条</li>
+          <li>内嵌反馈组件（Canny / 自建）</li>
+          <li>使用事件追踪（PostHog）</li>
+          <li>Mobile Dashboard 特别优化（小屏幕图表）</li>
+        </ul>
+        <div class="week-deliverable"><strong>Deliverable：</strong>完整产品功能，体验级别可对外</div>
+      </div>
+    </div>
+
+    <div class="week-card" style="border-color: rgba(106,247,196,0.3);">
+      <div class="week-label" style="color: var(--accent3);">WEEK<span class="week-num">07</span></div>
+      <div>
+        <div class="week-title">真实上线 + 作品集打磨 🚀</div>
+        <ul class="week-tasks">
+          <li>正式部署到生产域名（配 SSL、CDN）</li>
+          <li>邀请 5–10 个朋友注册真实使用</li>
+          <li>监控错误日志，修复真实 bug</li>
+          <li class="ai-task"><strong>Claude</strong>帮你写 GitHub README（含架构图、Agent 流程图、技术决策理由）</li>
+          <li class="ai-task"><strong>Claude</strong>帮你写简历条目 + LinkedIn 项目描述</li>
+          <li>录制 2–3 分钟 Demo 视频（用考摩托车驾照做案例）</li>
+          <li>LinkedIn / X 发布产品动态，收集公开反馈</li>
+        </ul>
+        <div class="week-deliverable" style="background: rgba(106,247,196,0.05); border-color: var(--accent3); color: var(--accent3);"><strong>Deliverable：</strong>真实产品 + 真实用户 + 专业作品集材料</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 09 SUCCESS CRITERIA -->
+  <div class="section-header fade-in">
+    <span class="section-num">09</span>
+    <span class="section-title">成功标准</span>
+    <span class="section-subtitle">Definition of Done</span>
+  </div>
+
+  <div class="milestone-list fade-in">
+    <div class="milestone-item">
+      <span class="milestone-check">[✓]</span>
+      <span class="milestone-text">生产域名可访问，<strong>面试官手机扫码即可体验</strong></span>
+    </div>
+    <div class="milestone-item">
+      <span class="milestone-check">[✓]</span>
+      <span class="milestone-text">至少 <strong>5 位真实用户</strong>完成注册并使用过完整学习流程</span>
+    </div>
+    <div class="milestone-item">
+      <span class="milestone-check">[✓]</span>
+      <span class="milestone-text">我自己用它通过<strong>维多利亚州摩托车学习驾照考试</strong>（真实故事）</span>
+    </div>
+    <div class="milestone-item">
+      <span class="milestone-check">[✓]</span>
+      <span class="milestone-text">OpenAI 月成本 <strong>&lt;$30</strong>，零异常烧钱事件</span>
+    </div>
+    <div class="milestone-item">
+      <span class="milestone-check">[✓]</span>
+      <span class="milestone-text">手机端 Lighthouse 性能分 <strong>&gt;85</strong></span>
+    </div>
+    <div class="milestone-item">
+      <span class="milestone-check">[✓]</span>
+      <span class="milestone-text">能手绘 <strong>LangGraph 状态图</strong>并讲解技术决策</span>
+    </div>
+    <div class="milestone-item">
+      <span class="milestone-check">[✓]</span>
+      <span class="milestone-text">README 包含架构图、成本控制机制、<strong>AI 协作开发说明</strong></span>
+    </div>
+  </div>
+
+  <!-- 10 RESUME READY -->
+  <div class="section-header fade-in">
+    <span class="section-num">10</span>
+    <span class="section-title">简历就绪条目</span>
+    <span class="section-subtitle">Resume Bullets</span>
+  </div>
+
+  <div class="resume-box fade-in">
+    <div class="resume-title">SkillPath · AI Learning Coach (Full-Stack AI Agent)</div>
+    <div class="resume-bullet">
+      Designed and built a production AI agent using <strong>LangGraph.js state machine</strong>, implementing Planner → Researcher → Quiz → Evaluator nodes with conditional routing based on user performance
+    </div>
+    <div class="resume-bullet">
+      Implemented <strong>long-term memory</strong> with Pinecone (1536-dim embeddings) for personalized learning paths based on user's mastery history
+    </div>
+    <div class="resume-bullet">
+      Built <strong>four-layer cost control system</strong> (rate limiting, token quotas, model tiering, circuit breaker) keeping OpenAI costs under $30/month for 50+ active users
+    </div>
+    <div class="resume-bullet">
+      Delivered <strong>mobile-first responsive UI</strong> with Tailwind, achieving Lighthouse score 85+ on mobile, allowing interview demos via phone scan
+    </div>
+    <div class="resume-bullet">
+      Leveraged <strong>Claude Code and Claude Artifacts</strong> throughout the development cycle for design prototyping and code generation, demonstrating modern AI-assisted engineering workflow
+    </div>
+    <div class="resume-bullet">
+      <strong>Real-world validation:</strong> Deployed on production domain with 5+ real users, used personally to pass Victorian motorcycle learner permit test
+    </div>
+    <div class="resume-bullet">
+      Stack: React 18 + Tailwind + Zustand frontend · Express + LangChain.js + LangGraph.js backend · MongoDB Atlas + Pinecone + Upstash Redis · Sentry + PostHog monitoring
+    </div>
+  </div>
+
+  <div class="footer fade-in">
+    // Aaron × AI Agent · v2 — Let's ship this to production 🚀
+  </div>
+
+</div>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.05 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+
+</body></html>

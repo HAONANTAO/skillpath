@@ -1,0 +1,237 @@
+{
+  "main": {
+    "id": "32fb523d534dbd98",
+    "type": "split",
+    "children": [
+      {
+        "id": "67d5e6585f8b110c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0b2431dd68ec9833",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "01-Design/Landing Page.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Landing Page"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "33551e0696adfa68",
+    "type": "split",
+    "children": [
+      {
+        "id": "b8ca09b443b148d2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "90130d270a1cc0f3",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "6f68428216909e6e",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "95b9c1623503c05a",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "aa05b990383d74ca",
+    "type": "split",
+    "children": [
+      {
+        "id": "c79ebe46108ebedd",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4d00e972b60faa6a",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "00-Overview/Progress Tracker.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Progress Tracker"
+            }
+          },
+          {
+            "id": "d073f0e9da9c2a18",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "01-Design/UI Pages List.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from UI Pages List"
+            }
+          },
+          {
+            "id": "b06bd9d28ea769a0",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "a85a2c9954cec26b",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "77b6b4989a6af893",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "00-Overview/Project Brief.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Project Brief"
+            }
+          },
+          {
+            "id": "b725a7fa1d204967",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          }
+        ],
+        "currentTab": 5
+      }
+    ],
+    "direction": "horizontal",
+    "width": 545.5
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "copilot:Open Copilot Chat": false
+    }
+  },
+  "active": "0b2431dd68ec9833",
+  "lastOpenFiles": [
+    "01-Design/Dashboard.md",
+    "01-Design/Landing Page.md",
+    "00-Overview/Project Brief.md",
+    "00-Overview/SkillPath Architecture.canvas",
+    "04-Resources/05-Interview/Interview Prep.md",
+    "04-Resources/02-AI-Models/Reasoning Models.md",
+    "04-Resources/03-Infrastructure/LLM Observability.md",
+    "04-Resources/05-Interview",
+    "04-Resources/04-Tools",
+    "04-Resources/03-Infrastructure",
+    "04-Resources/Untitled.md",
+    "04-Resources/02-AI-Models",
+    "04-Resources/01-Agent-Core",
+    "04-Resources/03-Infrastructure/Vector Search.md",
+    "04-Resources/02-AI-Models/Agentic AI Trends 2026.md",
+    "04-Resources/04-Tools/MCP.md",
+    "04-Resources/03-Infrastructure/Cost Control.md",
+    "04-Resources/03-Infrastructure/Zod.md",
+    "04-Resources/04-Tools/RAG vs Agent.md",
+    "04-Resources/04-Tools/LangSmith.md",
+    "04-Resources/03-Infrastructure/SSE Streaming.md",
+    "04-Resources/02-AI-Models/Prompt Engineering.md",
+    "04-Resources/03-Infrastructure/Pinecone.md",
+    "04-Resources/02-AI-Models/Embeddings.md",
+    "04-Resources/01-Agent-Core/Multi Agent.md",
+    "04-Resources/01-Agent-Core/Task Planning.md",
+    "04-Resources/01-Agent-Core/Tool Calling.md",
+    "04-Resources/01-Agent-Core/Memory Management.md",
+    "04-Resources/01-Agent-Core/LangGraph.md",
+    "04-Resources/01-Agent-Core/AI Agent Concepts.md",
+    "00-Overview/🏠 Home.md",
+    "00-Overview/Progress Tracker.md",
+    "copilot/copilot-custom-prompts",
+    "copilot",
+    "04-Resources",
+    "03-Weekly-Log",
+    "02-Development"
+  ]
+}

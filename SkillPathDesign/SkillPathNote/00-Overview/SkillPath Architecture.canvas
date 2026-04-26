@@ -1,0 +1,7 @@
+{
+	"nodes":[
+		{"id":"d2d87af97e4a1811","x":-200,"y":-560,"width":400,"height":400,"type":"file","file":"00-Overview/Progress Tracker.md"},
+		{"id":"8a7e928b7e71154d","x":280,"y":-560,"width":400,"height":400,"type":"file","file":"00-Overview/Project Brief.md"}
+	],
+	"edges":[]
+}

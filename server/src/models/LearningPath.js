@@ -12,8 +12,9 @@ const learningNodeSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   topics:      [String],
   resources:   [resourceSchema],
-  quizFocus:   { type: String, default: '' },
-  difficulty:  { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
+  quizFocus:     { type: String, default: '' },
+  difficulty:    { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
+  quizQuestions: { type: [mongoose.Schema.Types.Mixed], default: undefined },
 }, { _id: false })
 
 const learningPathSchema = new mongoose.Schema(
