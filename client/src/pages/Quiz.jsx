@@ -126,11 +126,22 @@ function Explanation({ text, isCorrect }) {
 }
 
 /* ── Score Screen ── */
-function ScoreScreen({ score, total, topicTitle, week, onRestart }) {
-  const navigate = useNavigate()
-  const pct = Math.round((score / total) * 100)
-  const grade = pct === 100 ? 'Perfect score' : pct >= 80 ? 'Strong result' : pct >= 60 ? 'Solid effort' : 'Keep practicing'
+function ScoreScreen({ score, total, topicTitle, week, pathId, evalResult, onRestart }) {
+  const navigate   = useNavigate()
+  const pct        = Math.round((score / total) * 100)
+  const grade      = pct === 100 ? 'Perfect score' : pct >= 80 ? 'Strong result' : pct >= 60 ? 'Solid effort' : 'Keep practicing'
   const gradeColor = pct >= 80 ? '#34d399' : pct >= 60 ? '#f7c66a' : '#f87171'
+  const passed     = evalResult?.passed ?? pct >= 60
+
+  function goNextWeek() {
+    const nextWeek = (week || 1) + 1
+    if (pathId) {
+      localStorage.setItem('learn_pathId', pathId)
+      localStorage.setItem('learn_week', String(nextWeek))
+    }
+    navigate('/learn', { state: { pathId, week: nextWeek } })
+  }
+
   return (
     <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:24,textAlign:'center',animation:'fadeIn 0.5s ease',background:'var(--color-bg-base)' }}>
       <div style={{ position:'relative',marginBottom:32 }}>
@@ -140,23 +151,50 @@ function ScoreScreen({ score, total, topicTitle, week, onRestart }) {
       <div style={{ fontSize:11,fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',color:'#7a7a94',marginBottom:12 }}>Quiz complete</div>
       <h1 style={{ fontFamily:'var(--font-display)',fontSize:'clamp(48px,12vw,72px)',fontWeight:700,lineHeight:1,color:gradeColor,letterSpacing:'-0.02em',marginBottom:8 }}>{pct}%</h1>
       <div style={{ fontSize:18,fontWeight:600,color:'#fff',marginBottom:6,fontFamily:'var(--font-display)' }}>{grade}</div>
-      <div style={{ fontSize:14,color:'#7a7a94',marginBottom:40 }}>
+      <div style={{ fontSize:14,color:'#7a7a94',marginBottom:16 }}>
         {score} of {total} correct{topicTitle ? ` — ${topicTitle}` : ''}{week ? ` · Week ${week}` : ''}
       </div>
-      <div style={{ width:'100%',maxWidth:360,background:'#1e1e30',height:8,borderRadius:999,marginBottom:40,overflow:'hidden' }}>
+
+      {/* Pass / retry badge */}
+      <div style={{ display:'inline-flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:9999,marginBottom:32,fontSize:13,fontWeight:600,background:passed?'rgba(52,211,153,0.1)':'rgba(248,113,113,0.1)',color:passed?'#34d399':'#f87171',border:`1px solid ${passed?'rgba(52,211,153,0.25)':'rgba(248,113,113,0.25)'}` }}>
+        {passed ? '✓ Week complete — next week unlocked' : '✗ Score below 60% — keep practicing'}
+      </div>
+
+      {/* Weak concepts */}
+      {evalResult?.wrongConcepts?.length > 0 && (
+        <div style={{ marginBottom:32,maxWidth:400,width:'100%' }}>
+          <div style={{ fontSize:12,color:'#7a7a94',marginBottom:10,fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase' }}>Concepts to review</div>
+          <div style={{ display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center' }}>
+            {evalResult.wrongConcepts.map(c => (
+              <span key={c} style={{ fontSize:12,fontWeight:500,padding:'4px 10px',borderRadius:6,background:'rgba(248,113,113,0.08)',color:'#f87171',border:'1px solid rgba(248,113,113,0.2)' }}>{c}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ width:'100%',maxWidth:360,background:'#1e1e30',height:8,borderRadius:999,marginBottom:36,overflow:'hidden' }}>
         <div style={{ height:'100%',width:`${pct}%`,background:`linear-gradient(90deg,${gradeColor}aa,${gradeColor})`,borderRadius:999,transition:'width 1s var(--ease-out-expo)',boxShadow:`0 0 10px ${gradeColor}44` }}/>
       </div>
-      <div style={{ display:'flex',gap:12 }}>
+
+      <div style={{ display:'flex',gap:12,flexWrap:'wrap',justifyContent:'center' }}>
+        {passed && pathId && (
+          <button onClick={goNextWeek}
+            style={{ background:'#7C6AF7',color:'#fff',border:'none',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease',boxShadow:'0 0 24px rgba(124,106,247,0.35)',display:'flex',alignItems:'center',gap:8 }}
+            onMouseEnter={e=>{e.currentTarget.style.background='#9b8cf9';e.currentTarget.style.transform='translateY(-1px)'}}
+            onMouseLeave={e=>{e.currentTarget.style.background='#7C6AF7';e.currentTarget.style.transform='none'}}>
+            Continue to Week {(week || 1) + 1} <ChevronRight/>
+          </button>
+        )}
         <button onClick={onRestart}
-          style={{ background:'#7C6AF7',color:'#fff',border:'none',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease',boxShadow:'0 0 24px rgba(124,106,247,0.35)' }}
-          onMouseEnter={e=>{e.target.style.background='#9b8cf9';e.target.style.transform='translateY(-1px)'}}
-          onMouseLeave={e=>{e.target.style.background='#7C6AF7';e.target.style.transform='none'}}>
-          Retake quiz
+          style={{ background:'transparent',color:'#7a7a94',border:'1px solid #2a2a3d',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease' }}
+          onMouseEnter={e=>{e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='#4a4a68'}}
+          onMouseLeave={e=>{e.currentTarget.style.color='#7a7a94';e.currentTarget.style.borderColor='#2a2a3d'}}>
+          {passed ? 'Retake' : 'Try again'}
         </button>
         <button onClick={() => navigate('/dashboard')}
           style={{ background:'transparent',color:'#7a7a94',border:'1px solid #2a2a3d',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease' }}
-          onMouseEnter={e=>{e.target.style.color='#fff';e.target.style.borderColor='#4a4a68'}}
-          onMouseLeave={e=>{e.target.style.color='#7a7a94';e.target.style.borderColor='#2a2a3d'}}>
+          onMouseEnter={e=>{e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='#4a4a68'}}
+          onMouseLeave={e=>{e.currentTarget.style.color='#7a7a94';e.currentTarget.style.borderColor='#2a2a3d'}}>
           Dashboard
         </button>
       </div>
@@ -176,15 +214,17 @@ export default function Quiz() {
   const [loading,   setLoading]   = useState(true)
   const [fetchError,setFetchError]= useState(null)
 
-  const [qIdx,      setQIdx]      = useState(0)
-  const [selected,  setSelected]  = useState(null)
-  const [submitted, setSubmitted] = useState(false)
-  const [score,     setScore]     = useState(0)
-  const [done,      setDone]      = useState(false)
-  const [timeLeft,  setTimeLeft]  = useState(TIMER_SECONDS)
-  const [timedOut,  setTimedOut]  = useState(false)
-  const timerRef      = useRef(null)
-  const explanationRef= useRef(null)
+  const [qIdx,        setQIdx]        = useState(0)
+  const [selected,    setSelected]    = useState(null)
+  const [submitted,   setSubmitted]   = useState(false)
+  const [score,       setScore]       = useState(0)
+  const [done,        setDone]        = useState(false)
+  const [timeLeft,    setTimeLeft]    = useState(TIMER_SECONDS)
+  const [timedOut,    setTimedOut]    = useState(false)
+  const [evalResult,  setEvalResult]  = useState(null)
+  const timerRef       = useRef(null)
+  const explanationRef = useRef(null)
+  const userAnswersRef = useRef([]) // accumulate answers across questions
 
   // ── Fetch questions ──────────────────────────────────────
   function fetchQuestions() {
@@ -232,13 +272,34 @@ export default function Quiz() {
   // ── Handlers ─────────────────────────────────────────────
   function handleSubmit() {
     if (selected === null && !timedOut) return
+    // Record this answer (-1 = timed out / skipped)
+    userAnswersRef.current[qIdx] = timedOut ? -1 : selected
     setSubmitted(true)
     if (selected === q.correct) setScore(s => s + 1)
     setTimeout(() => explanationRef.current?.scrollIntoView({ behavior:'smooth', block:'nearest' }), 100)
   }
 
   function handleNext() {
-    if (qIdx + 1 >= total) { setDone(true) } else {
+    if (qIdx + 1 >= total) {
+      setDone(true)
+      // Submit to evaluator (fire-and-forget — UI score is already calculated locally)
+      if (pathId) {
+        fetch(`/api/roadmap/${pathId}/node/${week}/evaluate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify({
+            userAnswers: userAnswersRef.current,
+            questions:   questions.map(q => ({ correct: q.correct, question: q.question })),
+          }),
+        })
+          .then(r => r.json())
+          .then(setEvalResult)
+          .catch(err => console.error('[evaluate]', err))
+      }
+    } else {
       setQIdx(i => i + 1); setSelected(null); setSubmitted(false); setTimedOut(false)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -246,8 +307,8 @@ export default function Quiz() {
 
   function handleRestart() {
     setQIdx(0); setSelected(null); setSubmitted(false); setScore(0); setDone(false)
-    setTimedOut(false); setTimeLeft(TIMER_SECONDS)
-    // Re-fetch to get fresh questions (cache is server-side so same questions returned fast)
+    setTimedOut(false); setTimeLeft(TIMER_SECONDS); setEvalResult(null)
+    userAnswersRef.current = []
     fetchQuestions()
   }
 
@@ -275,6 +336,8 @@ export default function Quiz() {
       total={total}
       topicTitle={q?.title}
       week={week}
+      pathId={pathId}
+      evalResult={evalResult}
       onRestart={handleRestart}
     />
   )

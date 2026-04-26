@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ICONS = {
@@ -22,6 +22,7 @@ const ICONS = {
   sparkles:     <><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></>,
   menu:         <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>,
   x:            <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
+  plus:         <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
 };
 
 const Icon = ({ name, size = 16, color = 'currentColor', sw = 2 }) => (
@@ -30,7 +31,7 @@ const Icon = ({ name, size = 16, color = 'currentColor', sw = 2 }) => (
   </svg>
 );
 
-const Avatar = ({ initials = 'JD', size = 32 }) => (
+const Avatar = ({ initials = 'U', size = 32 }) => (
   <div style={{ width: size, height: size, borderRadius: '50%', background: 'linear-gradient(135deg,#7C6AF7,#5a4fd4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.36, fontWeight: 700, color: '#fff', flexShrink: 0, letterSpacing: '-0.01em' }}>
     {initials}
   </div>
@@ -71,7 +72,7 @@ const NAV_BOTTOM = [
   { id: 'settings', icon: 'settings', label: 'Settings' },
 ];
 
-function SidebarContent({ active, onNav, onClose }) {
+function SidebarContent({ active, onNav, onClose, onLogout, userName, initials }) {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: 28 }}>
@@ -106,33 +107,34 @@ function SidebarContent({ active, onNav, onClose }) {
         {NAV_BOTTOM.map(item => (
           <div
             key={item.id}
+            onClick={item.id === 'settings' ? onLogout : undefined}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease', color: '#7a7a94' }}
           >
             <Icon name={item.icon} size={15} />
-            {item.label}
+            {item.id === 'settings' ? 'Log out' : item.label}
           </div>
         ))}
       </div>
       <div style={{ borderTop: '1px solid #1e1e2e', paddingTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Avatar initials="JD" size={32} />
+        <Avatar initials={initials} size={32} />
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Jamie Dev</div>
-          <div style={{ fontSize: 11, color: '#7a7a94' }}>Pro plan</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{userName || 'Loading…'}</div>
+          <div style={{ fontSize: 11, color: '#7a7a94' }}>SkillPath</div>
         </div>
       </div>
     </>
   );
 }
 
-function DesktopSidebar({ active, onNav }) {
+function DesktopSidebar({ active, onNav, onLogout, userName, initials }) {
   return (
     <aside style={{ width: 220, background: '#0f0f1a', borderRight: '1px solid #1e1e2e', display: 'flex', flexDirection: 'column', height: '100%', flexShrink: 0, padding: '20px 12px' }}>
-      <SidebarContent active={active} onNav={onNav} />
+      <SidebarContent active={active} onNav={onNav} onLogout={onLogout} userName={userName} initials={initials} />
     </aside>
   );
 }
 
-function MobileSidebar({ active, onNav, open, onClose }) {
+function MobileSidebar({ active, onNav, open, onClose, onLogout, userName, initials }) {
   return (
     <>
       {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 299 }} />}
@@ -144,7 +146,7 @@ function MobileSidebar({ active, onNav, open, onClose }) {
         transform: open ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 250ms cubic-bezier(0.16,1,0.3,1)',
       }}>
-        <SidebarContent active={active} onNav={onNav} onClose={onClose} />
+        <SidebarContent active={active} onNav={onNav} onClose={onClose} onLogout={onLogout} userName={userName} initials={initials} />
       </aside>
     </>
   );
@@ -152,7 +154,7 @@ function MobileSidebar({ active, onNav, open, onClose }) {
 
 function Heatmap() {
   const weeks = 26;
-  const today = new Date(2026, 3, 24);
+  const today = new Date();
   const [tooltip, setTooltip] = useState(null);
 
   const seed = (d) => {
@@ -278,7 +280,7 @@ function StatCard({ icon, iconColor, iconBg, label, value, sub, delay = 0 }) {
   );
 }
 
-function PathCard({ title, tag, tagColor, progress, lessonsLeft, timeLeft, color, delay = 0 }) {
+function PathCard({ pathId, title, tag, tagColor, progress, lessonsLeft, timeLeft, color, delay = 0 }) {
   const [hovered, setHovered] = useState(false);
   const navigate = useNavigate();
   return (
@@ -309,7 +311,7 @@ function PathCard({ title, tag, tagColor, progress, lessonsLeft, timeLeft, color
         <div style={{ display: 'flex', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#7a7a94' }}>
             <Icon name="book" size={12} color="#7a7a94" />
-            {lessonsLeft} lessons left
+            {lessonsLeft} {lessonsLeft === 1 ? 'week' : 'weeks'} left
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#7a7a94' }}>
             <Icon name="clock" size={12} color="#7a7a94" />
@@ -318,9 +320,15 @@ function PathCard({ title, tag, tagColor, progress, lessonsLeft, timeLeft, color
         </div>
         <button
           onClick={() => {
-            const savedPathId = localStorage.getItem('learn_pathId')
-            const savedWeek   = parseInt(localStorage.getItem('learn_week') || '1', 10)
-            navigate('/learn', savedPathId ? { state: { pathId: savedPathId, week: savedWeek } } : undefined)
+            const storedPathId = localStorage.getItem('learn_pathId')
+            const week = (pathId && pathId === storedPathId)
+              ? parseInt(localStorage.getItem('learn_week') || '1', 10)
+              : 1
+            if (pathId) {
+              localStorage.setItem('learn_pathId', pathId)
+              localStorage.setItem('learn_week', String(week))
+            }
+            navigate('/learn', pathId ? { state: { pathId, week } } : undefined)
           }}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#7C6AF7', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease' }}
           onMouseEnter={e => e.currentTarget.style.background = '#9080f9'}
@@ -328,6 +336,26 @@ function PathCard({ title, tag, tagColor, progress, lessonsLeft, timeLeft, color
         >
           Continue <Icon name="arrow_right" size={13} color="#fff" />
         </button>
+      </div>
+    </div>
+  );
+}
+
+function PathCardSkeleton() {
+  return (
+    <div style={{ background: '#131320', border: '1px solid #2a2a3d', borderRadius: 12, padding: 20 }}>
+      <div style={{ height: 3, borderRadius: '8px 8px 0 0', background: '#2a2a3d', margin: '-20px -20px 16px' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div>
+          <div style={{ width: 160, height: 16, borderRadius: 6, background: '#1e1e2e', marginBottom: 8 }} />
+          <div style={{ width: 70, height: 20, borderRadius: 4, background: '#1e1e2e' }} />
+        </div>
+        <div style={{ width: 48, height: 32, borderRadius: 6, background: '#1e1e2e' }} />
+      </div>
+      <div style={{ height: 6, borderRadius: 6, background: '#1e1e2e' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
+        <div style={{ width: 120, height: 14, borderRadius: 4, background: '#1e1e2e' }} />
+        <div style={{ width: 90, height: 34, borderRadius: 8, background: '#1e1e2e' }} />
       </div>
     </div>
   );
@@ -348,40 +376,93 @@ function ActivityItem({ icon, iconColor, iconBg, title, sub, time }) {
   );
 }
 
+function deriveMeta(topic = '') {
+  const t = topic.toLowerCase()
+  if (/react|vue|angular|svelte|css|html|tailwind|frontend/.test(t))
+    return { tag: 'Frontend', tagColor: 'purple', color: '#7C6AF7' }
+  if (/node|express|django|flask|fastapi|spring|backend|api|server|database|sql|mongodb/.test(t))
+    return { tag: 'Backend', tagColor: 'blue', color: '#60a5fa' }
+  if (/typescript|javascript|python|golang|rust|kotlin|swift|java|language/.test(t))
+    return { tag: 'Language', tagColor: 'green', color: '#34d399' }
+  if (/machine\s*learning|ml\b|ai\b|data\s*science|deep\s*learning/.test(t))
+    return { tag: 'AI/ML', tagColor: 'gold', color: '#f7c66a' }
+  return { tag: 'General', tagColor: 'gray', color: '#7a7a94' }
+}
+
+const ACTIVITIES = [
+  { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: useEffect deep dive',      sub: 'React Fundamentals · Week 4',    time: '2h ago' },
+  { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: Async/await patterns',     sub: 'Node.js & REST APIs · Week 2',   time: 'Yesterday' },
+  { icon: 'trophy',       iconColor: '#f7c66a', iconBg: 'rgba(247,198,106,0.1)', title: 'Badge unlocked: Hook Master',         sub: 'Completed 5 hook-related weeks',  time: 'Yesterday' },
+  { icon: 'zap',          iconColor: '#7C6AF7', iconBg: 'rgba(124,106,247,0.1)', title: 'Quiz passed: Closures & scope',       sub: '9/10 correct · 90% accuracy',     time: '2d ago' },
+  { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: Event loop explained',     sub: 'Node.js & REST APIs · Week 1',   time: '2d ago' },
+];
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [navActive, setNavActive] = useState('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [realPaths, setRealPaths] = useState([]);
+  const [realWeakConcepts, setRealWeakConcepts] = useState([]);
+  const [loadingPaths, setLoadingPaths] = useState(true);
+  const [loadingWeak, setLoadingWeak] = useState(true);
 
-  const paths = [
-    { title: 'React Fundamentals',   tag: 'Frontend', tagColor: 'purple', progress: 68, lessonsLeft: 8,  timeLeft: '~3h left', color: '#7C6AF7', delay: 0 },
-    { title: 'Node.js & REST APIs',  tag: 'Backend',  tagColor: 'blue',   progress: 41, lessonsLeft: 15, timeLeft: '~6h left', color: '#60a5fa', delay: 60 },
-    { title: 'TypeScript Essentials',tag: 'Language', tagColor: 'green',  progress: 12, lessonsLeft: 22, timeLeft: '~9h left', color: '#34d399', delay: 120 },
-  ];
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('learn_pathId')
+    localStorage.removeItem('learn_week')
+    navigate('/login')
+  }
 
-  const activities = [
-    { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: useEffect deep dive',      sub: 'React Fundamentals · Lesson 16',       time: '2h ago' },
-    { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: Async/await patterns',     sub: 'Node.js & REST APIs · Lesson 7',       time: 'Yesterday' },
-    { icon: 'trophy',       iconColor: '#f7c66a', iconBg: 'rgba(247,198,106,0.1)', title: 'Badge unlocked: Hook Master',         sub: 'Completed 5 hook-related lessons',      time: 'Yesterday' },
-    { icon: 'zap',          iconColor: '#7C6AF7', iconBg: 'rgba(124,106,247,0.1)', title: 'Quiz passed: Closures & scope',       sub: '9/10 correct · 90% accuracy',           time: '2d ago' },
-    { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: Event loop explained',     sub: 'Node.js & REST APIs · Lesson 6',       time: '2d ago' },
-  ];
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+  const firstName = storedUser.name?.split(' ')[0] || 'there'
+  const initials = storedUser.name
+    ? storedUser.name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
+    : 'U'
 
-  const weakPoints = [
-    { label: 'useCallback',          path: 'React Fundamentals' },
-    { label: 'Middleware chaining',  path: 'Node.js' },
-    { label: 'Generic types',        path: 'TypeScript' },
-    { label: 'Promise.all',          path: 'Async JS' },
-  ];
+  const today = new Date()
+  const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) { setLoadingPaths(false); setLoadingWeak(false); return }
+
+    fetch('/api/roadmap/my-paths', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => setRealPaths(data.paths || []))
+      .catch(() => {})
+      .finally(() => setLoadingPaths(false))
+
+    fetch('/api/roadmap/weak-concepts', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => setRealWeakConcepts(data.concepts || []))
+      .catch(() => {})
+      .finally(() => setLoadingWeak(false))
+  }, [])
+
+  const totalWeeksCompleted = realPaths.reduce(
+    (sum, p) => sum + Math.round((p.progress / 100) * p.weeks), 0
+  )
+
+  const pathCards = realPaths.map((p, i) => {
+    const { tag, tagColor, color } = deriveMeta(p.topic)
+    const completedWeeks = Math.round((p.progress / 100) * p.weeks)
+    const lessonsLeft = Math.max(0, p.weeks - completedWeeks)
+    const timeLeft = lessonsLeft <= 1 ? '~1h left' : `~${Math.round(lessonsLeft * 1.5)}h left`
+    return { pathId: p._id, title: p.topic, tag, tagColor, color, progress: p.progress, lessonsLeft, timeLeft, delay: i * 60 }
+  })
+
+  const weakPoints = realWeakConcepts.slice(0, 6).map(c => ({ label: c.concept, path: c.topic }))
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#0a0a0f' }}>
-      {/* Desktop sidebar — hidden below 769px via media query in index.css */}
+      {/* Desktop sidebar */}
       <div className="desktop-sidebar-wrapper" style={{ height: '100%' }}>
-        <DesktopSidebar active={navActive} onNav={setNavActive} />
+        <DesktopSidebar active={navActive} onNav={setNavActive} onLogout={handleLogout} userName={storedUser.name} initials={initials} />
       </div>
 
       {/* Mobile drawer */}
-      <MobileSidebar active={navActive} onNav={setNavActive} open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <MobileSidebar active={navActive} onNav={setNavActive} open={mobileOpen} onClose={() => setMobileOpen(false)} onLogout={handleLogout} userName={storedUser.name} initials={initials} />
 
       {/* Main area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
@@ -422,7 +503,7 @@ export default function Dashboard() {
               <Icon name="bell" size={16} />
               <div style={{ position: 'absolute', top: 7, right: 8, width: 7, height: 7, borderRadius: '50%', background: '#7C6AF7', border: '2px solid #0a0a0f' }} />
             </div>
-            <Avatar initials="JD" size={36} />
+            <Avatar initials={initials} size={36} />
           </div>
         </header>
 
@@ -433,17 +514,21 @@ export default function Dashboard() {
           <div className="fade-up" style={{ marginBottom: 28 }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <div>
-                <div style={{ fontSize: 13, color: '#7a7a94', fontWeight: 500, marginBottom: 4 }}>Thursday, April 24</div>
+                <div style={{ fontSize: 13, color: '#7a7a94', fontWeight: 500, marginBottom: 4 }}>{dateStr}</div>
                 <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: 'var(--font-display)' }}>
-                  Welcome back, <span style={{ color: '#7C6AF7' }}>Jamie</span>
+                  Welcome back, <span style={{ color: '#7C6AF7' }}>{firstName}</span>
                 </h1>
-                <p style={{ fontSize: 14, color: '#7a7a94', marginTop: 5 }}>You're on a 14-day streak. Keep it going.</p>
+                <p style={{ fontSize: 14, color: '#7a7a94', marginTop: 5 }}>
+                  {realPaths.length > 0
+                    ? `You have ${realPaths.length} active ${realPaths.length === 1 ? 'path' : 'paths'}. Keep going!`
+                    : 'Start your first learning path to track your progress.'}
+                </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(247,198,106,0.08)', border: '1px solid rgba(247,198,106,0.2)', borderRadius: 10, padding: '10px 16px' }}>
                 <Icon name="flame" size={18} color="#f7c66a" sw={1.5} />
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#f7c66a', fontFamily: 'var(--font-display)', lineHeight: 1 }}>14</div>
-                  <div style={{ fontSize: 11, color: '#7a7a94', fontWeight: 500 }}>day streak</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#f7c66a', fontFamily: 'var(--font-display)', lineHeight: 1 }}>{totalWeeksCompleted || 0}</div>
+                  <div style={{ fontSize: 11, color: '#7a7a94', fontWeight: 500 }}>weeks done</div>
                 </div>
               </div>
             </div>
@@ -451,10 +536,10 @@ export default function Dashboard() {
 
           {/* Stats row */}
           <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
-            <StatCard icon="book"      iconColor="#7C6AF7" iconBg="rgba(124,106,247,0.12)" label="Active paths"     value="3"   sub="+1 this month"     delay={0} />
-            <StatCard icon="bar_chart" iconColor="#60a5fa" iconBg="rgba(96,165,250,0.10)"  label="Weeks completed"  value="18"                          delay={60} />
-            <StatCard icon="target"    iconColor="#34d399" iconBg="rgba(52,211,153,0.10)"  label="Quiz accuracy"    value="87%" sub="+4% vs last week"   delay={120} />
-            <StatCard icon="flame"     iconColor="#f7c66a" iconBg="rgba(247,198,106,0.10)" label="Current streak"   value="14d"                          delay={180} />
+            <StatCard icon="book"      iconColor="#7C6AF7" iconBg="rgba(124,106,247,0.12)" label="Active paths"     value={String(realPaths.length)}              delay={0} />
+            <StatCard icon="bar_chart" iconColor="#60a5fa" iconBg="rgba(96,165,250,0.10)"  label="Weeks completed"  value={String(totalWeeksCompleted)}            delay={60} />
+            <StatCard icon="target"    iconColor="#34d399" iconBg="rgba(52,211,153,0.10)"  label="Weak concepts"    value={String(realWeakConcepts.length)}         delay={120} />
+            <StatCard icon="flame"     iconColor="#f7c66a" iconBg="rgba(247,198,106,0.10)" label="Paths finished"   value={String(realPaths.filter(p => p.progress === 100).length)} delay={180} />
           </div>
 
           {/* Middle grid */}
@@ -464,12 +549,34 @@ export default function Dashboard() {
             <section>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <h2 style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)' }}>Active paths</h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#7C6AF7', cursor: 'pointer', fontWeight: 500 }}>
-                  View all <Icon name="chevron_right" size={14} color="#7C6AF7" />
-                </div>
+                <button
+                  onClick={() => navigate('/roadmap')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#7C6AF7', cursor: 'pointer', fontWeight: 500, background: 'none', border: 'none', fontFamily: 'var(--font-sans)', padding: 0 }}
+                >
+                  <Icon name="plus" size={14} color="#7C6AF7" /> New path
+                </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {paths.map((p, i) => <PathCard key={i} {...p} />)}
+                {loadingPaths ? (
+                  <>
+                    <PathCardSkeleton />
+                    <PathCardSkeleton />
+                  </>
+                ) : pathCards.length === 0 ? (
+                  <div style={{ background: '#131320', border: '1px dashed #2a2a3d', borderRadius: 12, padding: '40px 24px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>🗺️</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 6 }}>No paths yet</div>
+                    <div style={{ fontSize: 13, color: '#7a7a94', marginBottom: 20 }}>Generate your first AI-powered learning roadmap to get started.</div>
+                    <button
+                      onClick={() => navigate('/roadmap')}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#7C6AF7', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      <Icon name="sparkles" size={14} color="#fff" /> Start learning
+                    </button>
+                  </div>
+                ) : (
+                  pathCards.map((p, i) => <PathCard key={p.pathId || i} {...p} />)
+                )}
               </div>
             </section>
 
@@ -483,8 +590,8 @@ export default function Dashboard() {
                   <Icon name="clock" size={14} color="#7a7a94" />
                 </div>
                 <div>
-                  {activities.map((a, i) => (
-                    <div key={i} style={{ borderBottom: i < activities.length - 1 ? '1px solid #1e1e2e' : 'none' }}>
+                  {ACTIVITIES.map((a, i) => (
+                    <div key={i} style={{ borderBottom: i < ACTIVITIES.length - 1 ? '1px solid #1e1e2e' : 'none' }}>
                       <ActivityItem {...a} />
                     </div>
                   ))}
@@ -497,33 +604,48 @@ export default function Dashboard() {
                   <Icon name="alert_circle" size={15} color="#f87171" />
                   <h2 style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)' }}>Weak points to review</h2>
                 </div>
-                <p style={{ fontSize: 12, color: '#7a7a94', marginBottom: 14, lineHeight: 1.5 }}>
-                  These concepts tripped you up on recent quizzes. Worth revisiting.
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {weakPoints.map((w, i) => (
-                    <div
-                      key={i}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(248,113,113,0.08)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 500, padding: '5px 10px', cursor: 'pointer', transition: 'background 150ms ease' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.14)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(248,113,113,0.08)'}
-                    >
-                      <Icon name="zap" size={11} color="#f87171" />
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{w.label}</div>
-                        <div style={{ fontSize: 10, color: 'rgba(248,113,113,0.6)', fontWeight: 400 }}>{w.path}</div>
-                      </div>
+                {loadingWeak ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {[80, 110, 90, 70].map(w => (
+                      <div key={w} style={{ width: w, height: 32, borderRadius: 6, background: '#1e1e2e' }} />
+                    ))}
+                  </div>
+                ) : weakPoints.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                    <div style={{ fontSize: 13, color: '#34d399', fontWeight: 600, marginBottom: 4 }}>All clear!</div>
+                    <div style={{ fontSize: 12, color: '#7a7a94' }}>Complete some quizzes to track your weak spots.</div>
+                  </div>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 12, color: '#7a7a94', marginBottom: 14, lineHeight: 1.5 }}>
+                      These concepts tripped you up on recent quizzes. Worth revisiting.
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {weakPoints.map((w, i) => (
+                        <div
+                          key={i}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(248,113,113,0.08)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 500, padding: '5px 10px', cursor: 'pointer', transition: 'background 150ms ease' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.14)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(248,113,113,0.08)'}
+                        >
+                          <Icon name="zap" size={11} color="#f87171" />
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{w.label}</div>
+                            <div style={{ fontSize: 10, color: 'rgba(248,113,113,0.6)', fontWeight: 400 }}>{w.path}</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <button
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', background: 'rgba(248,113,113,0.1)', color: '#f87171', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease', marginTop: 16 }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.18)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
-                >
-                  <Icon name="sparkles" size={13} color="#f87171" />
-                  Start review session
-                </button>
+                    <button
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', background: 'rgba(248,113,113,0.1)', color: '#f87171', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease', marginTop: 16 }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.18)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
+                    >
+                      <Icon name="sparkles" size={13} color="#f87171" />
+                      Start review session
+                    </button>
+                  </>
+                )}
               </section>
 
             </div>
@@ -537,7 +659,11 @@ export default function Dashboard() {
                 <p style={{ fontSize: 13, color: '#7a7a94' }}>Daily learning over the past 26 weeks</p>
               </div>
               <div style={{ display: 'flex', gap: 16 }}>
-                {[['94', 'days active'], ['847', 'min total'], ['62%', 'consistency']].map(([v, l]) => (
+                {[
+                  [String(realPaths.length * 7 || 0), 'paths active'],
+                  [String(totalWeeksCompleted), 'weeks done'],
+                  [String(realWeakConcepts.length), 'to review'],
+                ].map(([v, l]) => (
                   <div key={l} style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', lineHeight: 1 }}>{v}</div>
                     <div style={{ fontSize: 11, color: '#7a7a94', marginTop: 2 }}>{l}</div>

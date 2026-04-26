@@ -4,6 +4,8 @@ import { protect } from '../middleware/auth.js'
 import { plannerNode } from '../agent/nodes/plannerNode.js'
 import { researcherNode } from '../agent/nodes/researcherNode.js'
 import { quizNode } from '../agent/nodes/quizNode.js'
+import { evaluatorNode } from '../agent/nodes/evaluatorNode.js'
+import { getWeakConcepts } from '../services/memoryService.js'
 import LearningPath from '../models/LearningPath.js'
 
 const router = Router()
@@ -47,6 +49,18 @@ router.get('/my-paths', protect, async (req, res) => {
     .sort({ createdAt: -1 })
     .select('topic goal weeks progress createdAt')
   res.json({ paths })
+})
+
+// GET /api/roadmap/weak-concepts?topic=...
+// Must be declared before /:pathId to avoid being swallowed by the param route
+router.get('/weak-concepts', protect, async (req, res) => {
+  try {
+    const concepts = await getWeakConcepts(req.user._id.toString(), req.query.topic || undefined)
+    res.json({ concepts })
+  } catch (err) {
+    console.error('[memoryService]', err.message)
+    res.status(500).json({ message: 'Failed to fetch weak concepts', error: err.message })
+  }
 })
 
 // GET /api/roadmap/:pathId
@@ -113,6 +127,45 @@ router.post('/:pathId/node/:nodeId/quiz', protect, async (req, res) => {
   } catch (err) {
     console.error('[quizNode]', err.message)
     res.status(500).json({ message: 'Failed to generate quiz', error: err.message })
+  }
+})
+
+// POST /api/roadmap/:pathId/node/:nodeId/evaluate
+const EvaluateSchema = z.object({
+  userAnswers: z.array(z.number().int().min(0).max(3)),
+  questions:   z.array(z.object({
+    correct:     z.number().int().min(0).max(3),
+    question:    z.string(),
+  })),
+})
+
+router.post('/:pathId/node/:nodeId/evaluate', protect, async (req, res) => {
+  const week = parseInt(req.params.nodeId, 10)
+  if (isNaN(week)) return res.status(400).json({ message: 'Invalid nodeId' })
+
+  const parsed = EvaluateSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'Invalid input', errors: parsed.error.flatten().fieldErrors })
+  }
+
+  const path = await LearningPath.findOne({ _id: req.params.pathId, user: req.user._id })
+  if (!path) return res.status(404).json({ message: 'Path not found' })
+
+  const node = path.nodes.find(n => n.week === week)
+  if (!node) return res.status(404).json({ message: `Week ${week} not found` })
+
+  try {
+    const result = await evaluatorNode({
+      currentNode:  node,
+      path,
+      userId:       req.user._id.toString(),
+      userAnswers:  parsed.data.userAnswers,
+      questions:    parsed.data.questions,
+    })
+    res.json(result)
+  } catch (err) {
+    console.error('[evaluatorNode]', err.message)
+    res.status(500).json({ message: 'Evaluation failed', error: err.message })
   }
 })
 

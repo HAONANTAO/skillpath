@@ -139,6 +139,29 @@ export default function LearningNode() {
   const currentWeek     = node?.week     || week
   const progressPct     = Math.round((currentWeek - 1) / totalWeeks * 100)
 
+  // Week beyond end-of-path → course complete screen
+  if (!nodeLoading && pathId && pathMeta && !node) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center', padding: 24, background: 'var(--color-bg-base)', fontFamily: 'var(--font-sans)' }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700, color: '#fff', marginBottom: 8, letterSpacing: '-0.02em' }}>
+          {week > totalWeeks ? 'You completed the course!' : 'Week not found'}
+        </h1>
+        <p style={{ fontSize: 15, color: '#7a7a94', maxWidth: 400, lineHeight: 1.6, marginBottom: 32 }}>
+          {week > totalWeeks
+            ? `You've finished all ${totalWeeks} weeks of "${pathMeta.topic}". Head to the dashboard to start a new path.`
+            : `Week ${week} doesn't exist in this path.`}
+        </p>
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{ background: '#7C6AF7', color: '#fff', border: 'none', borderRadius: 9999, padding: '14px 32px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+        >
+          Back to Dashboard
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div style={{ background: 'var(--color-bg-base)', fontFamily: 'var(--font-sans)', minHeight: '100vh' }}>
       {/* Topbar */}
