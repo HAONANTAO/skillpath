@@ -27,14 +27,21 @@ const model = new ChatOpenAI({
 }).withStructuredOutput(RoadmapSchema, { name: 'roadmap' })
 
 export async function plannerNode(state) {
-  const { topic, goal, weeks } = state
+  const { topic, goal, weeks, historicalWeakConcepts = [] } = state
+
+  const memoryBlock = historicalWeakConcepts.length > 0
+    ? `\nLearner memory: This learner has previously struggled with these concepts across past topics:
+${historicalWeakConcepts.slice(0, 10).map(c => `- ${c}`).join('\n')}
+
+If any of these concepts are foundational for the topic above, dedicate extra time to them — either schedule them earlier in the roadmap, give them their own week, or list them prominently in the topics array of the relevant week. Don't force-include concepts that aren't relevant.\n`
+    : ''
 
   const prompt = `You are an expert curriculum designer. Create a ${weeks}-week learning roadmap for the following:
 
 Topic: ${topic}
 Goal: ${goal}
 Duration: ${weeks} weeks
-
+${memoryBlock}
 Requirements:
 - Each week builds on the previous
 - Progress from fundamentals to advanced concepts

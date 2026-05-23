@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getToken } from '../services/authService.js'
+import { useToast } from '../components/Toast.jsx'
 
 const LABELS = ['A', 'B', 'C', 'D']
 const TIMER_SECONDS = 90
@@ -126,12 +127,15 @@ function Explanation({ text, isCorrect }) {
 }
 
 /* ── Score Screen ── */
-function ScoreScreen({ score, total, topicTitle, week, pathId, evalResult, onRestart }) {
+function ScoreScreen({ score, total, topicTitle, week, pathId, evalResult, onRestart, onAdaptiveRetry, onStartRetry, retryLoading, retryData }) {
   const navigate   = useNavigate()
   const pct        = Math.round((score / total) * 100)
   const grade      = pct === 100 ? 'Perfect score' : pct >= 80 ? 'Strong result' : pct >= 60 ? 'Solid effort' : 'Keep practicing'
   const gradeColor = pct >= 80 ? '#34d399' : pct >= 60 ? '#f7c66a' : '#f87171'
   const passed     = evalResult?.passed ?? pct >= 60
+  const hasWeakConcepts = (evalResult?.wrongConcepts?.length || 0) > 0
+  const canAdaptiveRetry = !passed && hasWeakConcepts && pathId
+  const pathComplete = evalResult?.pathComplete === true
 
   function goNextWeek() {
     const nextWeek = (week || 1) + 1
@@ -156,17 +160,51 @@ function ScoreScreen({ score, total, topicTitle, week, pathId, evalResult, onRes
       </div>
 
       {/* Pass / retry badge */}
-      <div style={{ display:'inline-flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:9999,marginBottom:32,fontSize:13,fontWeight:600,background:passed?'rgba(52,211,153,0.1)':'rgba(248,113,113,0.1)',color:passed?'#34d399':'#f87171',border:`1px solid ${passed?'rgba(52,211,153,0.25)':'rgba(248,113,113,0.25)'}` }}>
-        {passed ? '✓ Week complete — next week unlocked' : '✗ Score below 60% — keep practicing'}
+      <div style={{ display:'inline-flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:9999,marginBottom:pathComplete?16:32,fontSize:13,fontWeight:600,background:passed?'rgba(52,211,153,0.1)':'rgba(248,113,113,0.1)',color:passed?'#34d399':'#f87171',border:`1px solid ${passed?'rgba(52,211,153,0.25)':'rgba(248,113,113,0.25)'}` }}>
+        {pathComplete ? '🎉 Path complete — every week passed' : passed ? '✓ Week complete — next week unlocked' : '✗ Score below 60% — keep practicing'}
       </div>
+
+      {/* Path completion celebration */}
+      {pathComplete && (
+        <div style={{ marginBottom:32,maxWidth:480,width:'100%',background:'linear-gradient(135deg,rgba(52,211,153,0.08),rgba(124,106,247,0.08))',border:'1px solid rgba(52,211,153,0.3)',borderRadius:16,padding:'20px 22px',animation:'slideUp 0.5s var(--ease-out-expo)' }}>
+          <div style={{ fontFamily:'var(--font-display)',fontSize:17,fontWeight:700,color:'#fff',marginBottom:6,textAlign:'center' }}>Nice work finishing the whole path</div>
+          <div style={{ fontSize:13,color:'#7a7a94',lineHeight:1.55,textAlign:'center' }}>
+            Every weak concept you hit along the way is saved to memory — your next path will be tuned around them.
+          </div>
+        </div>
+      )}
 
       {/* Weak concepts */}
       {evalResult?.wrongConcepts?.length > 0 && (
-        <div style={{ marginBottom:32,maxWidth:400,width:'100%' }}>
+        <div style={{ marginBottom:24,maxWidth:400,width:'100%' }}>
           <div style={{ fontSize:12,color:'#7a7a94',marginBottom:10,fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase' }}>Concepts to review</div>
           <div style={{ display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center' }}>
             {evalResult.wrongConcepts.map(c => (
               <span key={c} style={{ fontSize:12,fontWeight:500,padding:'4px 10px',borderRadius:6,background:'rgba(248,113,113,0.08)',color:'#f87171',border:'1px solid rgba(248,113,113,0.2)' }}>{c}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Adaptive retry: review resources card (shown after /retry succeeds) */}
+      {retryData?.reviewResources?.length > 0 && (
+        <div style={{ marginBottom:24,maxWidth:520,width:'100%',textAlign:'left',background:'#131320',border:'1px solid rgba(124,106,247,0.3)',borderRadius:14,padding:'18px 20px',boxShadow:'0 0 24px rgba(124,106,247,0.08)',animation:'slideUp 0.35s var(--ease-out-expo)' }}>
+          <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:10 }}>
+            <div style={{ color:'#7C6AF7' }}><SparklesIcon/></div>
+            <div style={{ fontSize:12,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',color:'#bdb0fb' }}>Quick review first</div>
+          </div>
+          <div style={{ fontSize:13,color:'#7a7a94',marginBottom:14,lineHeight:1.5 }}>
+            Hand-picked resources for your weak spots before retrying.
+          </div>
+          <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
+            {retryData.reviewResources.map((r, i) => (
+              <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
+                style={{ display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#1a1a2e',border:'1px solid #2a2a3d',borderRadius:8,textDecoration:'none',color:'#c4c4d4',fontSize:13,transition:'all 0.15s ease' }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='#7C6AF7';e.currentTarget.style.background='rgba(124,106,247,0.05)'}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor='#2a2a3d';e.currentTarget.style.background='#1a1a2e'}}>
+                <span style={{ fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#7C6AF7',background:'rgba(124,106,247,0.12)',padding:'2px 8px',borderRadius:4,flexShrink:0 }}>{r.type}</span>
+                <span style={{ flex:1,lineHeight:1.4 }}>{r.title}</span>
+              </a>
             ))}
           </div>
         </div>
@@ -177,7 +215,7 @@ function ScoreScreen({ score, total, topicTitle, week, pathId, evalResult, onRes
       </div>
 
       <div style={{ display:'flex',gap:12,flexWrap:'wrap',justifyContent:'center' }}>
-        {passed && pathId && (
+        {passed && pathId && !pathComplete && (
           <button onClick={goNextWeek}
             style={{ background:'#7C6AF7',color:'#fff',border:'none',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease',boxShadow:'0 0 24px rgba(124,106,247,0.35)',display:'flex',alignItems:'center',gap:8 }}
             onMouseEnter={e=>{e.currentTarget.style.background='#9b8cf9';e.currentTarget.style.transform='translateY(-1px)'}}
@@ -185,18 +223,62 @@ function ScoreScreen({ score, total, topicTitle, week, pathId, evalResult, onRes
             Continue to Week {(week || 1) + 1} <ChevronRight/>
           </button>
         )}
-        <button onClick={onRestart}
-          style={{ background:'transparent',color:'#7a7a94',border:'1px solid #2a2a3d',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease' }}
-          onMouseEnter={e=>{e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='#4a4a68'}}
-          onMouseLeave={e=>{e.currentTarget.style.color='#7a7a94';e.currentTarget.style.borderColor='#2a2a3d'}}>
-          {passed ? 'Retake' : 'Try again'}
-        </button>
-        <button onClick={() => navigate('/dashboard')}
-          style={{ background:'transparent',color:'#7a7a94',border:'1px solid #2a2a3d',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease' }}
-          onMouseEnter={e=>{e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='#4a4a68'}}
-          onMouseLeave={e=>{e.currentTarget.style.color='#7a7a94';e.currentTarget.style.borderColor='#2a2a3d'}}>
-          Dashboard
-        </button>
+
+        {/* Path-complete primary CTAs: go back to dashboard or start another path */}
+        {pathComplete && (
+          <>
+            <button onClick={() => navigate('/dashboard')}
+              style={{ background:'#34d399',color:'#0a0a0f',border:'none',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease',boxShadow:'0 0 24px rgba(52,211,153,0.35)',display:'flex',alignItems:'center',gap:8 }}
+              onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.opacity='0.92'}}
+              onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.opacity='1'}}>
+              Back to dashboard <ChevronRight/>
+            </button>
+            <button onClick={() => navigate('/roadmap')}
+              style={{ background:'#7C6AF7',color:'#fff',border:'none',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease',boxShadow:'0 0 24px rgba(124,106,247,0.35)',display:'flex',alignItems:'center',gap:8 }}
+              onMouseEnter={e=>{e.currentTarget.style.background='#9b8cf9';e.currentTarget.style.transform='translateY(-1px)'}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#7C6AF7';e.currentTarget.style.transform='none'}}>
+              Start a new path
+            </button>
+          </>
+        )}
+
+        {/* Adaptive retry CTA — only when failed AND we have weak concepts to target */}
+        {canAdaptiveRetry && !retryData && (
+          <button onClick={onAdaptiveRetry} disabled={retryLoading}
+            style={{ background:retryLoading?'#4e3fcf':'#7C6AF7',color:'#fff',border:'none',borderRadius:9999,padding:'14px 28px',fontSize:15,fontWeight:600,cursor:retryLoading?'wait':'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease',boxShadow:'0 0 24px rgba(124,106,247,0.35)',display:'flex',alignItems:'center',gap:8,opacity:retryLoading?0.7:1 }}
+            onMouseEnter={e=>{if(!retryLoading){e.currentTarget.style.background='#9b8cf9';e.currentTarget.style.transform='translateY(-1px)'}}}
+            onMouseLeave={e=>{if(!retryLoading){e.currentTarget.style.background='#7C6AF7';e.currentTarget.style.transform='none'}}}>
+            <SparklesIcon/> {retryLoading ? 'Generating focused quiz…' : 'Adaptive retry'}
+          </button>
+        )}
+
+        {/* Start focused retry — shown after /retry succeeds */}
+        {retryData && (
+          <button onClick={onStartRetry}
+            style={{ background:'#7C6AF7',color:'#fff',border:'none',borderRadius:9999,padding:'14px 28px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease',boxShadow:'0 0 24px rgba(124,106,247,0.35)',display:'flex',alignItems:'center',gap:8 }}
+            onMouseEnter={e=>{e.currentTarget.style.background='#9b8cf9';e.currentTarget.style.transform='translateY(-1px)'}}
+            onMouseLeave={e=>{e.currentTarget.style.background='#7C6AF7';e.currentTarget.style.transform='none'}}>
+            Start focused retry <ChevronRight/>
+          </button>
+        )}
+
+        {/* Plain restart — fallback when we can't do adaptive retry, plus passed-state retake */}
+        {(passed || !canAdaptiveRetry) && (
+          <button onClick={onRestart}
+            style={{ background:'transparent',color:'#7a7a94',border:'1px solid #2a2a3d',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease' }}
+            onMouseEnter={e=>{e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='#4a4a68'}}
+            onMouseLeave={e=>{e.currentTarget.style.color='#7a7a94';e.currentTarget.style.borderColor='#2a2a3d'}}>
+            {passed ? 'Retake' : 'Try again'}
+          </button>
+        )}
+        {!pathComplete && (
+          <button onClick={() => navigate('/dashboard')}
+            style={{ background:'transparent',color:'#7a7a94',border:'1px solid #2a2a3d',borderRadius:9999,padding:'14px 32px',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)',transition:'all 0.15s ease' }}
+            onMouseEnter={e=>{e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='#4a4a68'}}
+            onMouseLeave={e=>{e.currentTarget.style.color='#7a7a94';e.currentTarget.style.borderColor='#2a2a3d'}}>
+            Dashboard
+          </button>
+        )}
       </div>
     </div>
   )
@@ -206,6 +288,7 @@ function ScoreScreen({ score, total, topicTitle, week, pathId, evalResult, onRes
 export default function Quiz() {
   const navigate  = useNavigate()
   const location  = useLocation()
+  const toast     = useToast()
 
   const pathId = location.state?.pathId || localStorage.getItem('learn_pathId') || null
   const week   = location.state?.week   ?? parseInt(localStorage.getItem('learn_week') || '1', 10)
@@ -222,6 +305,8 @@ export default function Quiz() {
   const [timeLeft,    setTimeLeft]    = useState(TIMER_SECONDS)
   const [timedOut,    setTimedOut]    = useState(false)
   const [evalResult,  setEvalResult]  = useState(null)
+  const [retryLoading,setRetryLoading]= useState(false)
+  const [retryData,   setRetryData]   = useState(null) // { questions, reviewResources, retryCount, focusConcepts }
   const timerRef       = useRef(null)
   const explanationRef = useRef(null)
   const userAnswersRef = useRef([]) // accumulate answers across questions
@@ -292,7 +377,7 @@ export default function Quiz() {
           },
           body: JSON.stringify({
             userAnswers: userAnswersRef.current,
-            questions:   questions.map(q => ({ correct: q.correct, question: q.question })),
+            questions:   questions.map(q => ({ correct: q.correct, question: q.question, concept: q.concept })),
           }),
         })
           .then(r => r.json())
@@ -308,8 +393,36 @@ export default function Quiz() {
   function handleRestart() {
     setQIdx(0); setSelected(null); setSubmitted(false); setScore(0); setDone(false)
     setTimedOut(false); setTimeLeft(TIMER_SECONDS); setEvalResult(null)
+    setRetryData(null)
     userAnswersRef.current = []
     fetchQuestions()
+  }
+
+  // ── Adaptive retry: fetch focused quiz + review resources for weak concepts ──
+  function handleAdaptiveRetry() {
+    if (!pathId || retryLoading) return
+    setRetryLoading(true)
+    fetch(`/api/roadmap/${pathId}/node/${week}/retry`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+      .then(({ ok, data }) => {
+        if (!ok || !data.questions) throw new Error(data.message || 'Adaptive retry failed')
+        setRetryData(data)
+      })
+      .catch(err => toast.error(err.message))
+      .finally(() => setRetryLoading(false))
+  }
+
+  // ── Start the retry quiz: swap in the new questions and reset all per-question state ──
+  function handleStartRetry() {
+    if (!retryData?.questions) return
+    setQuizData(retryData.questions)
+    setQIdx(0); setSelected(null); setSubmitted(false); setScore(0); setDone(false)
+    setTimedOut(false); setTimeLeft(TIMER_SECONDS); setEvalResult(null)
+    setRetryData(null) // clear so the review card disappears once they're in the new quiz
+    userAnswersRef.current = []
   }
 
   function getOptionState(idx) {
@@ -339,6 +452,10 @@ export default function Quiz() {
       pathId={pathId}
       evalResult={evalResult}
       onRestart={handleRestart}
+      onAdaptiveRetry={handleAdaptiveRetry}
+      onStartRetry={handleStartRetry}
+      retryLoading={retryLoading}
+      retryData={retryData}
     />
   )
 

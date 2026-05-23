@@ -11,6 +11,7 @@ const QuestionSchema = z.object({
   }),
   correctAnswer: z.enum(['A', 'B', 'C', 'D']).describe('Letter of the correct option'),
   explanation: z.string().describe('Why the correct answer is right, in 2-3 sentences'),
+  concept: z.string().describe('Single concept from the topics list that this question primarily tests. Must exactly match one of the listed topics.'),
 })
 
 const QuizSchema = z.object({
@@ -23,35 +24,51 @@ const model = new ChatOpenAI({
 }).withStructuredOutput(QuizSchema, { name: 'quiz' })
 
 export async function quizNode(state) {
-  const { currentNode } = state
+  const {
+    currentNode,
+    focusConcepts = [],          // retry: primary focus concepts
+    historicalWeakConcepts = [], // initial: past weak concepts from memory (gentle weight)
+  } = state
   const { title, topics = [], quizFocus = '' } = currentNode
+  const isRetry = focusConcepts.length > 0
+
+  // For initial quizzes, find concepts the user has historically struggled with that overlap with this node
+  const relevantHistorical = isRetry
+    ? []
+    : historicalWeakConcepts.filter(c =>
+        topics.some(t => t.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(t.toLowerCase()))
+      )
 
   const prompt = `You are a coding educator creating a quiz for learners.
 
 Topic: ${title}
 Concepts covered: ${topics.join(', ')}
 ${quizFocus ? `Quiz focus: ${quizFocus}` : ''}
+${isRetry ? `\nThis is a RETRY quiz. The learner previously struggled with these concepts:
+${focusConcepts.map(c => `- ${c}`).join('\n')}
 
-Generate exactly 5 multiple-choice questions that test understanding of the above concepts.
+Generate exactly 5 multiple-choice questions that primarily target the weak concepts above. Approach them from different angles than a typical first-pass quiz (different examples, different framings) so the learner actually has to demonstrate understanding rather than recognize a memorized answer.` : `\nGenerate exactly 5 multiple-choice questions that test understanding of the above concepts.`}
+${relevantHistorical.length > 0 ? `\nNote: This learner has previously struggled with related concepts: ${relevantHistorical.join(', ')}. Make sure at least 1 question covers these areas, but keep the overall quiz balanced across all topics.` : ''}
 
 Rules:
-- Questions should vary in difficulty (2 easy, 2 medium, 1 hard)
+- Questions should vary in difficulty (${isRetry ? '3 easy, 2 medium' : '2 easy, 2 medium, 1 hard'})
 - Each question must have exactly 4 options (A, B, C, D)
 - Only one option is correct
 - Distractors should be plausible, not obviously wrong
-- Explanations should be clear and educational
-- Use code snippets in backticks when relevant`
+- Explanations should be clear and educational${isRetry ? ', and explicitly reinforce the weak concept' : ''}
+- Use code snippets in backticks when relevant
+- Each question's "concept" field MUST be one of the listed topics (verbatim) — this is used to track what the learner struggles with`
 
   const { questions } = await model.invoke([{ role: 'user', content: prompt }])
 
-  // Normalize to 0-based index for the frontend
   const letterToIndex = { A: 0, B: 1, C: 2, D: 3 }
   const normalized = questions.slice(0, 5).map((q, i) => ({
-    id: i + 1,
-    question: q.question,
-    options: [q.options.A, q.options.B, q.options.C, q.options.D],
-    correct: letterToIndex[q.correctAnswer],
+    id:          i + 1,
+    question:    q.question,
+    options:     [q.options.A, q.options.B, q.options.C, q.options.D],
+    correct:     letterToIndex[q.correctAnswer],
     explanation: q.explanation,
+    concept:     q.concept,
   }))
 
   return { questions: normalized }

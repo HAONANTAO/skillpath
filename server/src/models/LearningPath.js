@@ -14,10 +14,12 @@ const learningNodeSchema = new mongoose.Schema({
   resources:     [resourceSchema],
   quizFocus:     { type: String, default: '' },
   difficulty:    { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
-  quizQuestions: { type: [mongoose.Schema.Types.Mixed], default: undefined },
-  status:        { type: String, enum: ['locked', 'unlocked', 'complete'], default: 'locked' },
-  quizScore:     { type: Number, default: null },
-  wrongConcepts: [String],
+  quizQuestions:   { type: [mongoose.Schema.Types.Mixed], default: undefined },
+  status:          { type: String, enum: ['locked', 'unlocked', 'complete'], default: 'locked' },
+  quizScore:       { type: Number, default: null },
+  wrongConcepts:   [String],
+  retryCount:      { type: Number, default: 0 },
+  reviewResources: [resourceSchema],
 }, { _id: false })
 
 const learningPathSchema = new mongoose.Schema(

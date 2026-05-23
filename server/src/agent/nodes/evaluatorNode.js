@@ -19,9 +19,13 @@ export async function evaluatorNode(state) {
   const score   = Math.round((correct / total) * 100)
   const passed  = score >= 60
 
-  // Map wrong answer indices → concepts from the node's topics list
+  // Map wrong answer indices → the actual concept tagged on each question by quizNode
+  // Fallback to topics rotation only if quizNode didn't tag (old paths from before concept tagging)
   const wrongConcepts = userAnswers
-    .map((ans, i) => (ans !== questions[i].correct ? currentNode.topics[i % currentNode.topics.length] : null))
+    .map((ans, i) => {
+      if (ans === questions[i].correct) return null
+      return questions[i].concept || currentNode.topics?.[i % (currentNode.topics?.length || 1)] || null
+    })
     .filter(Boolean)
     .filter((v, i, a) => a.indexOf(v) === i) // deduplicate
 
@@ -55,5 +59,8 @@ export async function evaluatorNode(state) {
 
   await path.save()
 
-  return { score, passed, wrongConcepts, nodeStatus: node?.status }
+  const isFinalWeek = currentNode.week === path.nodes.length
+  const pathComplete = passed && isFinalWeek && path.progress === 100
+
+  return { score, passed, wrongConcepts, nodeStatus: node?.status, isFinalWeek, pathComplete }
 }

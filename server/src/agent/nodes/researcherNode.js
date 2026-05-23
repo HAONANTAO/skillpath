@@ -20,10 +20,14 @@ function estimateDuration(type, content = '') {
 }
 
 export async function researcherNode(state) {
-  const { currentNode } = state
-  const { title, topics = [], description = '' } = currentNode
+  const { currentNode, focusConcepts = [] } = state
+  const { title, topics = [] } = currentNode
+  const isReview = focusConcepts.length > 0
 
-  const query = `${title} ${topics.slice(0, 3).join(' ')} tutorial guide`
+  // Review-mode: target the weak concepts directly with explainer-style queries
+  const query = isReview
+    ? `${focusConcepts.slice(0, 3).join(' ')} ${title} explained examples`
+    : `${title} ${topics.slice(0, 3).join(' ')} tutorial guide`
 
   const result = await getClient().search(query, {
     max_results: 5,

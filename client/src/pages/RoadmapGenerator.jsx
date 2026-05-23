@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getToken } from '../services/authService.js'
 
@@ -58,15 +58,15 @@ function getRoadmap(topic, weeks) {
 }
 
 /* ── Loading State ── */
-function LoadingState() {
-  const [step, setStep] = useState(0)
-  const steps = ['Analyzing your goal…','Structuring weekly milestones…','Selecting key concepts…','Sequencing your roadmap…','Finalizing your path…']
-  useEffect(() => {
-    const t = setInterval(() => setStep(s => s < steps.length-1 ? s+1 : s), 600)
-    return () => clearInterval(t)
-  }, [])
+function LoadingState({ progressLog = [] }) {
+  // Each entry: { stage, message, ts, done }
+  // Show a vertical timeline of agent events streamed from the server.
+  const lines = progressLog.length > 0
+    ? progressLog
+    : [{ stage: 'connect', message: 'Connecting to agent…', done: false }]
+
   return (
-    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'80px 24px',gap:32,animation:'fadeUp 0.4s var(--ease-out-expo)' }}>
+    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 24px',gap:28,animation:'fadeUp 0.4s var(--ease-out-expo)' }}>
       <div style={{ position:'relative',width:96,height:96 }}>
         <div style={{ position:'absolute',inset:0,borderRadius:'50%',background:'radial-gradient(circle at 40% 40%,#7C6AF7 0%,#4e3fcf 60%,#2a2060 100%)',animation:'glowPulse 2s ease-in-out infinite' }}/>
         <div style={{ position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center' }}>
@@ -75,12 +75,21 @@ function LoadingState() {
       </div>
       <div style={{ textAlign:'center' }}>
         <div style={{ fontFamily:'var(--font-display)',fontSize:22,fontWeight:700,color:'#fff',marginBottom:8 }}>Building your roadmap…</div>
-        <div style={{ fontSize:14,color:'var(--fg-muted)',height:20,transition:'all 0.3s ease' }}>{steps[step]}</div>
+        <div style={{ fontSize:13,color:'var(--fg-muted)' }}>Live agent steps</div>
       </div>
-      <div style={{ display:'flex',gap:8 }}>
-        {steps.map((_,i) => (
-          <div key={i} style={{ width:i===step?24:6,height:6,borderRadius:999,background:i<=step?'var(--accent)':'#2a2a3d',transition:'all 0.4s var(--ease-out-expo)' }}/>
-        ))}
+      <div style={{ width:'100%',maxWidth:440,display:'flex',flexDirection:'column',gap:8 }}>
+        {lines.map((entry, i) => {
+          const isLast = i === lines.length - 1
+          const active = isLast && !entry.done
+          return (
+            <div key={i} style={{ display:'flex',alignItems:'flex-start',gap:12,padding:'10px 14px',background:active?'rgba(124,106,247,0.06)':'#131320',border:`1px solid ${active?'rgba(124,106,247,0.3)':'#1e1e2e'}`,borderRadius:10,animation:'fadeUp 0.3s var(--ease-out-expo)' }}>
+              <div style={{ width:18,height:18,borderRadius:'50%',flexShrink:0,marginTop:1,display:'flex',alignItems:'center',justifyContent:'center',background:entry.done?'rgba(52,211,153,0.15)':active?'rgba(124,106,247,0.2)':'#1e1e2e',border:`1px solid ${entry.done?'#34d399':active?'#7C6AF7':'#2a2a3d'}` }}>
+                {entry.done ? <span style={{ color:'#34d399',fontSize:11,fontWeight:700 }}>✓</span> : active ? <div style={{ width:6,height:6,borderRadius:'50%',background:'#7C6AF7',animation:'glowPulse 1.2s ease-in-out infinite' }}/> : <div style={{ width:5,height:5,borderRadius:'50%',background:'#3a3a52' }}/>}
+              </div>
+              <div style={{ flex:1,fontSize:13,color:active?'#fff':entry.done?'#c4c4d4':'#7a7a94',lineHeight:1.4 }}>{entry.message}</div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -164,17 +173,35 @@ export default function RoadmapGenerator() {
   const [pathId, setPathId] = useState(null)
   const [error, setError] = useState(null)
   const [layout, setLayout] = useState('grid')
+  const [progressLog, setProgressLog] = useState([])
   const resultRef = useRef(null)
 
   const canGenerate = form.topic.trim().length > 0
+
+  // Map a streamed stage event into a progress log entry. Returns null if the
+  // stage is a transitional ":done" that we want to apply to the previous entry.
+  function applyStreamEvent(payload, setLog) {
+    const { stage, message } = payload
+    setLog(prev => {
+      // ":done" suffixes mark the previous active step as completed
+      if (stage.endsWith(':done')) {
+        const base = stage.replace(':done', '')
+        return prev.map(e => e.stage === base ? { ...e, done: true, message: message || e.message } : e)
+      }
+      // Otherwise append a new step
+      return [...prev.map(e => ({ ...e, done: true })), { stage, message: message || stage, done: false }]
+    })
+  }
 
   async function handleGenerate() {
     if (!canGenerate) return
     setPhase('loading')
     setError(null)
+    setProgressLog([])
+
     try {
       const token = getToken()
-      const res = await fetch('/api/roadmap/generate', {
+      const res = await fetch('/api/roadmap/generate-stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,10 +209,49 @@ export default function RoadmapGenerator() {
         },
         body: JSON.stringify({ topic: form.topic, goal: form.goal, weeks: form.weeks }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || 'Failed to generate roadmap')
-      setRoadmap(data.roadmap)
-      setPathId(data.pathId)
+
+      if (!res.ok || !res.body) {
+        // Try to parse error JSON for non-stream failures (validation, auth, etc)
+        let msg = 'Failed to generate roadmap'
+        try { msg = (await res.json()).message || msg } catch { /* keep default */ }
+        throw new Error(msg)
+      }
+
+      const reader  = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let finalPayload = null
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        // SSE messages are separated by blank lines
+        const parts = buffer.split('\n\n')
+        buffer = parts.pop() || ''
+        for (const part of parts) {
+          const line = part.split('\n').find(l => l.startsWith('data: '))
+          if (!line) continue
+          try {
+            const payload = JSON.parse(line.slice(6))
+            if (payload.stage === 'error') throw new Error(payload.message || 'Generation failed')
+            if (payload.stage === 'done')  { finalPayload = payload; applyStreamEvent({ stage: 'done', message: payload.message || 'Roadmap ready' }, setProgressLog); continue }
+            applyStreamEvent(payload, setProgressLog)
+          } catch (parseErr) {
+            // If parsing fails, surface the error; otherwise just skip malformed chunk
+            if (parseErr.message && parseErr.message !== 'Generation failed') continue
+            throw parseErr
+          }
+        }
+      }
+
+      if (!finalPayload) throw new Error('Stream ended without a roadmap')
+
+      // Brief beat so the user sees the final "done" tick before transitioning
+      await new Promise(r => setTimeout(r, 400))
+      setRoadmap(finalPayload.roadmap)
+      setPathId(finalPayload.pathId)
       setPhase('result')
       setTimeout(() => resultRef.current && window.scrollTo({ top: resultRef.current.offsetTop - 20, behavior: 'smooth' }), 100)
     } catch (err) {
@@ -194,7 +260,7 @@ export default function RoadmapGenerator() {
     }
   }
 
-  function handleReset() { setPhase('input'); setRoadmap([]); setPathId(null); setError(null) }
+  function handleReset() { setPhase('input'); setRoadmap([]); setPathId(null); setError(null); setProgressLog([]) }
 
   const getCardState = (w) => ({ unlocked: w <= 2, completed: w === 1 })
 
@@ -291,7 +357,7 @@ export default function RoadmapGenerator() {
         )}
 
         {/* Loading */}
-        {phase === 'loading' && <LoadingState/>}
+        {phase === 'loading' && <LoadingState progressLog={progressLog}/>}
 
         {/* Result */}
         {phase === 'result' && (

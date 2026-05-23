@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../components/Toast.jsx';
 
 const ICONS = {
   grid:         <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></>,
@@ -280,9 +281,45 @@ function StatCard({ icon, iconColor, iconBg, label, value, sub, delay = 0 }) {
   );
 }
 
-function PathCard({ pathId, title, tag, tagColor, progress, lessonsLeft, timeLeft, color, delay = 0 }) {
-  const [hovered, setHovered] = useState(false);
+function PathCard({ pathId, title, tag, tagColor, progress, lessonsLeft, timeLeft, color, isComplete, delay = 0, onSubmitRename, onDelete }) {
+  const [hovered, setHovered]   = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing]   = useState(false);
+  const [draft, setDraft]       = useState(title);
+  const inputRef                = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const close = () => setMenuOpen(false)
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [editing])
+
+  function startEditing() {
+    setDraft(title)
+    setEditing(true)
+  }
+
+  function commitEdit() {
+    const next = draft.trim()
+    setEditing(false)
+    if (!next || next === title) return
+    onSubmitRename?.(pathId, next)
+  }
+
+  function cancelEdit() {
+    setDraft(title)
+    setEditing(false)
+  }
+
   return (
     <div
       className="fade-up"
@@ -296,27 +333,87 @@ function PathCard({ pathId, title, tag, tagColor, progress, lessonsLeft, timeLef
         transition: 'border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease',
         transform: hovered ? 'translateY(-2px)' : 'none',
         boxShadow: hovered ? '0 4px 24px rgba(0,0,0,0.4)' : 'none',
+        position: 'relative',
       }}
     >
       <div style={{ height: 3, borderRadius: '8px 8px 0 0', background: color, margin: '-20px -20px 16px', opacity: 0.8 }} />
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', marginBottom: 5 }}>{title}</div>
-          <Badge color={tagColor}>{tag}</Badge>
+
+      {/* Kebab menu — visible on hover, or when menu is open */}
+      {pathId && (
+        <div style={{ position: 'absolute', top: 14, right: 14, opacity: (hovered || menuOpen) ? 1 : 0, transition: 'opacity 150ms ease' }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(v => !v) }}
+            aria-label="Path options"
+            style={{ background: 'transparent', border: '1px solid #2a2a3d', borderRadius: 6, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7a7a94', cursor: 'pointer', padding: 0 }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#4a4a68' }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#7a7a94'; e.currentTarget.style.borderColor = '#2a2a3d' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          </button>
+          {menuOpen && (
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ position: 'absolute', top: 30, right: 0, background: '#1a1a2e', border: '1px solid #2a2a3d', borderRadius: 8, padding: 4, minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', zIndex: 10 }}
+            >
+              <button
+                onClick={() => { setMenuOpen(false); startEditing() }}
+                style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: '#c4c4d4', padding: '8px 12px', fontSize: 13, fontFamily: 'var(--font-sans)', borderRadius: 5, cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#2a2a3d'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >Rename</button>
+              <button
+                onClick={() => { setMenuOpen(false); onDelete?.(pathId, title) }}
+                style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: '#f87171', padding: '8px 12px', fontSize: 13, fontFamily: 'var(--font-sans)', borderRadius: 5, cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >Delete</button>
+            </div>
+          )}
         </div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', lineHeight: 1 }}>{progress}%</div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {editing ? (
+            <input
+              ref={inputRef}
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={e => {
+                if (e.key === 'Enter')  { e.preventDefault(); commitEdit() }
+                if (e.key === 'Escape') { e.preventDefault(); cancelEdit() }
+              }}
+              maxLength={200}
+              style={{ width: '100%', fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', background: '#0f0f1a', border: '1px solid #7C6AF7', borderRadius: 6, padding: '4px 8px', marginBottom: 5, outline: 'none', boxShadow: '0 0 0 2px rgba(124,106,247,0.18)' }}
+            />
+          ) : (
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Badge color={tagColor}>{tag}</Badge>
+            {isComplete && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <Icon name="check" size={10} color="#34d399" /> Completed
+              </span>
+            )}
+          </div>
+        </div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: isComplete ? '#34d399' : '#fff', fontFamily: 'var(--font-display)', lineHeight: 1, marginRight: pathId ? 36 : 0, marginLeft: 12 }}>{progress}%</div>
       </div>
       <ProgressBar value={progress} color={color} height={6} animated />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
         <div style={{ display: 'flex', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#7a7a94' }}>
             <Icon name="book" size={12} color="#7a7a94" />
-            {lessonsLeft} {lessonsLeft === 1 ? 'week' : 'weeks'} left
+            {isComplete ? 'All weeks done' : `${lessonsLeft} ${lessonsLeft === 1 ? 'week' : 'weeks'} left`}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#7a7a94' }}>
-            <Icon name="clock" size={12} color="#7a7a94" />
-            {timeLeft}
-          </div>
+          {!isComplete && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#7a7a94' }}>
+              <Icon name="clock" size={12} color="#7a7a94" />
+              {timeLeft}
+            </div>
+          )}
         </div>
         <button
           onClick={() => {
@@ -330,11 +427,11 @@ function PathCard({ pathId, title, tag, tagColor, progress, lessonsLeft, timeLef
             }
             navigate('/learn', pathId ? { state: { pathId, week } } : undefined)
           }}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#7C6AF7', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease' }}
-          onMouseEnter={e => e.currentTarget.style.background = '#9080f9'}
-          onMouseLeave={e => e.currentTarget.style.background = '#7C6AF7'}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: isComplete ? 'transparent' : '#7C6AF7', color: isComplete ? '#c4c4d4' : '#fff', border: isComplete ? '1px solid #2a2a3d' : 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 150ms ease' }}
+          onMouseEnter={e => { if (isComplete) { e.currentTarget.style.borderColor = '#4a4a68'; e.currentTarget.style.color = '#fff' } else { e.currentTarget.style.background = '#9080f9' } }}
+          onMouseLeave={e => { if (isComplete) { e.currentTarget.style.borderColor = '#2a2a3d'; e.currentTarget.style.color = '#c4c4d4' } else { e.currentTarget.style.background = '#7C6AF7' } }}
         >
-          Continue <Icon name="arrow_right" size={13} color="#fff" />
+          {isComplete ? 'Review' : 'Continue'} <Icon name="arrow_right" size={13} color={isComplete ? '#c4c4d4' : '#fff'} />
         </button>
       </div>
     </div>
@@ -399,6 +496,7 @@ const ACTIVITIES = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [navActive, setNavActive] = useState('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [realPaths, setRealPaths] = useState([]);
@@ -444,12 +542,53 @@ export default function Dashboard() {
     (sum, p) => sum + Math.round((p.progress / 100) * p.weeks), 0
   )
 
+  async function handleDeletePath(pathId, title) {
+    if (!window.confirm(`Delete "${title}"? This can't be undone.`)) return
+    const token = localStorage.getItem('token')
+    try {
+      const res = await fetch(`/api/roadmap/${pathId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.message || 'Failed to delete path')
+      }
+      setRealPaths(prev => prev.filter(p => p._id !== pathId))
+      if (localStorage.getItem('learn_pathId') === pathId) {
+        localStorage.removeItem('learn_pathId')
+        localStorage.removeItem('learn_week')
+      }
+      toast.success(`Deleted "${title}"`)
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
+  async function handleSubmitRename(pathId, nextTitle) {
+    const token = localStorage.getItem('token')
+    try {
+      const res = await fetch(`/api/roadmap/${pathId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ topic: nextTitle }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.message || 'Failed to rename path')
+      }
+      const data = await res.json()
+      setRealPaths(prev => prev.map(p => p._id === pathId ? { ...p, topic: data.path.topic } : p))
+      toast.success('Path renamed')
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
   const pathCards = realPaths.map((p, i) => {
     const { tag, tagColor, color } = deriveMeta(p.topic)
     const completedWeeks = Math.round((p.progress / 100) * p.weeks)
     const lessonsLeft = Math.max(0, p.weeks - completedWeeks)
     const timeLeft = lessonsLeft <= 1 ? '~1h left' : `~${Math.round(lessonsLeft * 1.5)}h left`
-    return { pathId: p._id, title: p.topic, tag, tagColor, color, progress: p.progress, lessonsLeft, timeLeft, delay: i * 60 }
+    const isComplete = p.progress >= 100
+    return { pathId: p._id, title: p.topic, tag, tagColor, color, progress: p.progress, lessonsLeft, timeLeft, isComplete, delay: i * 60, onDelete: handleDeletePath, onSubmitRename: handleSubmitRename }
   })
 
   const weakPoints = realWeakConcepts.slice(0, 6).map(c => ({ label: c.concept, path: c.topic }))
