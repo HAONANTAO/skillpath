@@ -80,29 +80,41 @@ export async function me(req, res) {
 }
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
-// Frontend sends the ID token returned by Google Identity Services.
-// We verify the token signature against Google's JWKS, then find-or-create
-// the user (linking by googleId, falling back to email for existing accounts).
+// Frontend uses Google's OAuth implicit flow (via useGoogleLogin) and sends us
+// an access_token. We:
+//   1. Validate that the token was issued for OUR client_id (prevents tokens
+//      leaked from other apps being replayed against us)
+//   2. Use the access token to fetch the user's profile from Google
+//   3. Find-or-create the user (link by googleId, fall back to email)
 export async function googleLogin(req, res) {
-  const { credential } = req.body
-  if (!credential) {
-    return res.status(400).json({ message: 'Missing Google credential' })
+  const { access_token } = req.body
+  if (!access_token) {
+    return res.status(400).json({ message: 'Missing access token' })
   }
 
   try {
-    const ticket = await getGoogleClient().verifyIdToken({
-      idToken:  credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+    // Step 1: audience check — the access token's `aud` must equal our client_id
+    const tokenInfo = await getGoogleClient().getTokenInfo(access_token)
+    if (tokenInfo.aud !== process.env.GOOGLE_CLIENT_ID) {
+      return res.status(401).json({ message: 'Access token was issued for a different app' })
+    }
+
+    // Step 2: fetch profile (sub, email, name, email_verified)
+    const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` },
     })
-    const payload = ticket.getPayload()
-    if (!payload?.email_verified) {
+    if (!profileRes.ok) {
+      return res.status(401).json({ message: 'Failed to fetch Google profile' })
+    }
+    const profile = await profileRes.json()
+    if (!profile.email_verified) {
       return res.status(401).json({ message: 'Google account email is not verified' })
     }
 
-    const { sub: googleId, email, name } = payload
+    const { sub: googleId, email, name } = profile
 
-    // Lookup by googleId first; fall back to email so existing password users
-    // can also sign in with Google (we'll attach the googleId on first use)
+    // Step 3: lookup by googleId first; fall back to email so existing password
+    // users can also sign in with Google (we attach the googleId on first use)
     let user = await User.findOne({ googleId })
     if (!user) {
       user = await User.findOne({ email })

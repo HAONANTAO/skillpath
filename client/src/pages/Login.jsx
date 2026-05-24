@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { GoogleLogin } from '@react-oauth/google'
+import { useGoogleLogin } from '@react-oauth/google'
 import {
   login as apiLogin,
   register as apiRegister,
@@ -28,6 +28,16 @@ function EyeOffIcon() {
 }
 function CheckIcon({ size = 24 }) {
   return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+}
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M17.64 9.2045c0-.638-.0573-1.252-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.6149z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8064.54-1.8368.859-3.0477.859-2.3446 0-4.3282-1.5836-5.036-3.7105H.957v2.3318C2.4382 15.9832 5.4818 18 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.5954.1023-1.1732.282-1.71V4.9582H.957A8.9965 8.9965 0 0 0 0 9c0 1.452.3477 2.8264.957 4.0418L3.964 10.71z" fill="#FBBC05"/>
+      <path d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4627.891 11.4255 0 9 0 5.4818 0 2.4382 2.0168.957 4.9582L3.964 7.29C4.6718 5.1632 6.6554 3.5795 9 3.5795z" fill="#EA4335"/>
+    </svg>
+  )
 }
 /* ── Canvas Node Graph ── */
 function NodeGraph() {
@@ -213,19 +223,33 @@ function LoginForm({ onSwitch }) {
   const [showForgot, setShowForgot] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  async function handleGoogleCredential(credentialResponse) {
-    if (!credentialResponse?.credential) return
-    setApiError(null)
-    try {
-      const { token, user } = await apiGoogleLogin(credentialResponse.credential)
-      saveAuth(token, user)
-      setSuccess(true)
-      setTimeout(() => navigate('/dashboard'), 700)
-    } catch (err) {
-      setApiError(err.message)
-      toast.error(err.message)
-    }
-  }
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  // Implicit OAuth flow — Google returns an access_token that the backend
+  // exchanges for the user profile via Google's userinfo endpoint.
+  const googleSignIn = useGoogleLogin({
+    flow: 'implicit',
+    scope: 'openid email profile',
+    onSuccess: async ({ access_token }) => {
+      setApiError(null)
+      setGoogleLoading(true)
+      try {
+        const { token, user } = await apiGoogleLogin(access_token)
+        saveAuth(token, user)
+        setSuccess(true)
+        setTimeout(() => navigate('/dashboard'), 700)
+      } catch (err) {
+        setApiError(err.message)
+        toast.error(err.message)
+      } finally {
+        setGoogleLoading(false)
+      }
+    },
+    onError: () => {
+      setApiError('Google sign-in was cancelled or failed')
+      toast.error('Google sign-in failed')
+    },
+  })
 
   function validate() {
     const e = {}
@@ -290,16 +314,16 @@ function LoginForm({ onSwitch }) {
         <span style={{ fontSize:'var(--text-xs)',color:'var(--fg-muted)',letterSpacing:'0.06em' }}>or</span>
         <div style={{ flex:1,height:1,background:'var(--color-border-subtle)' }}/>
       </div>
-      <div style={{ display:'flex',justifyContent:'center' }}>
-        <GoogleLogin
-          onSuccess={handleGoogleCredential}
-          onError={() => { setApiError('Google sign-in failed'); toast.error('Google sign-in failed') }}
-          theme="filled_black"
-          shape="rectangular"
-          text="continue_with"
-          width="320"
-        />
-      </div>
+      <button
+        type="button"
+        onClick={() => googleSignIn()}
+        disabled={googleLoading}
+        style={{ width:'100%',background:'transparent',color:'var(--fg-secondary)',border:'1px solid var(--color-border-default)',borderRadius:'var(--radius-md)',fontFamily:'var(--font-sans)',fontSize:'var(--text-base)',fontWeight:'var(--weight-medium)',padding:'12px 20px',cursor:googleLoading?'wait':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,transition:'border-color 150ms ease, background 150ms ease',opacity:googleLoading?0.7:1 }}
+        onMouseEnter={e=>{ if(!googleLoading) e.currentTarget.style.borderColor='var(--color-border-strong)' }}
+        onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--color-border-default)' }}
+      >
+        <GoogleIcon/> {googleLoading ? 'Signing in…' : 'Continue with Google'}
+      </button>
 
       <p style={{ textAlign:'center',marginTop:28,fontSize:'var(--text-sm)',color:'var(--fg-muted)' }}>
         Don't have an account?{' '}<span onClick={onSwitch} style={{ color:'var(--accent)',fontWeight:'var(--weight-medium)',cursor:'pointer' }}>Create one</span>

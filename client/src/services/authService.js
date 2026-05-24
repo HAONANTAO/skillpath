@@ -19,8 +19,8 @@ export async function login(email, password) {
   return request('/login', { email, password })
 }
 
-export async function googleLogin(credential) {
-  return request('/google', { credential })
+export async function googleLogin(accessToken) {
+  return request('/google', { access_token: accessToken })
 }
 
 export async function forgotPassword(email) {
