@@ -19,6 +19,18 @@ export async function login(email, password) {
   return request('/login', { email, password })
 }
 
+export async function googleLogin(credential) {
+  return request('/google', { credential })
+}
+
+export async function forgotPassword(email) {
+  return request('/forgot-password', { email })
+}
+
+export async function resetPassword(token, password) {
+  return request('/reset-password', { token, password })
+}
+
 export function saveAuth(token, user) {
   localStorage.setItem('token', token)
   localStorage.setItem('user', JSON.stringify(user))

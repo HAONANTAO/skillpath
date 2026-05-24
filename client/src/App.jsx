@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
+import ResetPassword from './pages/ResetPassword'
 import RoadmapGenerator from './pages/RoadmapGenerator'
 import LearningNode from './pages/LearningNode'
 import Quiz from './pages/Quiz'
@@ -16,6 +17,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/roadmap" element={<ProtectedRoute><RoadmapGenerator /></ProtectedRoute>} />
         <Route path="/learn"   element={<ProtectedRoute><LearningNode /></ProtectedRoute>} />
         <Route path="/quiz"    element={<ProtectedRoute><Quiz /></ProtectedRoute>} />

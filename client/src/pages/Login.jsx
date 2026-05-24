@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login as apiLogin, register as apiRegister, saveAuth } from '../services/authService.js'
+import { GoogleLogin } from '@react-oauth/google'
+import {
+  login as apiLogin,
+  register as apiRegister,
+  googleLogin as apiGoogleLogin,
+  forgotPassword as apiForgotPassword,
+  saveAuth,
+} from '../services/authService.js'
+import { useToast } from '../components/Toast.jsx'
 
 /* ── Icons ── */
 function EmailIcon() {
@@ -142,8 +150,27 @@ function Field({ label, id, type='text', placeholder, value, onChange, error, au
 
 /* ── Forgot Password Modal ── */
 function ForgotModal({ onClose }) {
-  const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
+  const toast = useToast()
+  const [email, setEmail]     = useState('')
+  const [sent, setSent]       = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!email || loading) return
+    setLoading(true)
+    try {
+      await apiForgotPassword(email)
+      // Server intentionally returns ok even when the email doesn't exist
+      // (avoid email enumeration). UI mirrors that — always show success.
+      setSent(true)
+    } catch (err) {
+      toast.error(err.message || 'Failed to send reset email')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:'var(--z-modal)',display:'flex',alignItems:'center',justifyContent:'center',animation:'fadeIn 200ms ease' }} onClick={e => e.target===e.currentTarget&&onClose()}>
       <div style={{ background:'var(--color-bg-surface-3)',border:'1px solid var(--color-border-default)',borderRadius:'var(--radius-xl)',padding:32,width:'100%',maxWidth:380,boxShadow:'var(--shadow-3)',animation:'slideUp 250ms var(--ease-out-expo)' }}>
@@ -154,16 +181,18 @@ function ForgotModal({ onClose }) {
               <button onClick={onClose} style={{ background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',padding:2 }}>✕</button>
             </div>
             <p style={{ fontSize:'var(--text-sm)',color:'var(--fg-muted)',marginBottom:20,lineHeight:1.55 }}>Enter your email and we'll send you a reset link.</p>
-            <form onSubmit={e => { e.preventDefault(); if(email) setSent(true) }}>
+            <form onSubmit={handleSubmit}>
               <Field id="reset-email" type="email" placeholder="you@example.com" value={email} onChange={setEmail} autoComplete="email"/>
-              <button type="submit" disabled={!email} style={{ width:'100%',background:'var(--accent)',color:'#fff',border:'none',borderRadius:'var(--radius-md)',fontFamily:'var(--font-sans)',fontSize:'var(--text-base)',fontWeight:'var(--weight-semibold)',padding:'13px 20px',cursor:email?'pointer':'not-allowed',marginTop:8,opacity:email?1:0.5 }}>Send reset link</button>
+              <button type="submit" disabled={!email || loading} style={{ width:'100%',background:'var(--accent)',color:'#fff',border:'none',borderRadius:'var(--radius-md)',fontFamily:'var(--font-sans)',fontSize:'var(--text-base)',fontWeight:'var(--weight-semibold)',padding:'13px 20px',cursor:(email && !loading)?'pointer':'not-allowed',marginTop:8,opacity:(email && !loading)?1:0.5 }}>
+                {loading ? 'Sending…' : 'Send reset link'}
+              </button>
             </form>
           </>
         ) : (
           <div style={{ textAlign:'center',padding:'32px 0',animation:'fadeUp 0.4s var(--ease-out-expo)' }}>
             <div style={{ width:56,height:56,background:'rgba(52,211,153,0.12)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px',color:'var(--color-success)' }}><CheckIcon/></div>
             <h2 style={{ fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',marginBottom:8 }}>Check your inbox</h2>
-            <p style={{ fontSize:'var(--text-sm)',color:'var(--fg-muted)',marginBottom:20 }}>We sent a reset link to <strong style={{ color:'var(--fg-secondary)' }}>{email}</strong></p>
+            <p style={{ fontSize:'var(--text-sm)',color:'var(--fg-muted)',marginBottom:20 }}>If an account exists for <strong style={{ color:'var(--fg-secondary)' }}>{email}</strong>, a reset link is on its way.</p>
             <button onClick={onClose} style={{ background:'var(--accent)',color:'#fff',border:'none',borderRadius:'var(--radius-md)',padding:'12px 24px',cursor:'pointer',fontFamily:'var(--font-sans)',fontWeight:'var(--weight-semibold)' }}>Back to sign in</button>
           </div>
         )}
@@ -175,6 +204,7 @@ function ForgotModal({ onClose }) {
 /* ── Login Form ── */
 function LoginForm({ onSwitch }) {
   const navigate = useNavigate()
+  const toast = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState({})
@@ -182,6 +212,20 @@ function LoginForm({ onSwitch }) {
   const [loading, setLoading] = useState(false)
   const [showForgot, setShowForgot] = useState(false)
   const [success, setSuccess] = useState(false)
+
+  async function handleGoogleCredential(credentialResponse) {
+    if (!credentialResponse?.credential) return
+    setApiError(null)
+    try {
+      const { token, user } = await apiGoogleLogin(credentialResponse.credential)
+      saveAuth(token, user)
+      setSuccess(true)
+      setTimeout(() => navigate('/dashboard'), 700)
+    } catch (err) {
+      setApiError(err.message)
+      toast.error(err.message)
+    }
+  }
 
   function validate() {
     const e = {}
@@ -240,6 +284,23 @@ function LoginForm({ onSwitch }) {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
+
+      <div style={{ display:'flex',alignItems:'center',gap:12,margin:'20px 0' }}>
+        <div style={{ flex:1,height:1,background:'var(--color-border-subtle)' }}/>
+        <span style={{ fontSize:'var(--text-xs)',color:'var(--fg-muted)',letterSpacing:'0.06em' }}>or</span>
+        <div style={{ flex:1,height:1,background:'var(--color-border-subtle)' }}/>
+      </div>
+      <div style={{ display:'flex',justifyContent:'center' }}>
+        <GoogleLogin
+          onSuccess={handleGoogleCredential}
+          onError={() => { setApiError('Google sign-in failed'); toast.error('Google sign-in failed') }}
+          theme="filled_black"
+          shape="rectangular"
+          text="continue_with"
+          width="320"
+        />
+      </div>
+
       <p style={{ textAlign:'center',marginTop:28,fontSize:'var(--text-sm)',color:'var(--fg-muted)' }}>
         Don't have an account?{' '}<span onClick={onSwitch} style={{ color:'var(--accent)',fontWeight:'var(--weight-medium)',cursor:'pointer' }}>Create one</span>
       </p>
