@@ -204,7 +204,7 @@ function Heatmap() {
       cells.push(
         <div
           key={d}
-          style={{ width: 13, height: 13, borderRadius: 3, background: colors[entry.level], cursor: 'pointer', transition: 'opacity 150ms ease' }}
+          style={{ width: 13, height: 13, borderRadius: 3, background: colors[entry.level], cursor: 'default', transition: 'opacity 150ms ease' }}
           onMouseEnter={(e) => setTooltip({ label, minutes: entry.minutes, x: e.clientX, y: e.clientY })}
           onMouseLeave={() => setTooltip(null)}
         />
@@ -629,27 +629,9 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="topbar-search" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <div style={{ position: 'absolute', left: 10, pointerEvents: 'none' }}>
-              <Icon name="search" size={14} color="#7a7a94" />
-            </div>
-            <input
-              placeholder="Search lessons, paths…"
-              style={{ fontFamily: 'var(--font-sans)', fontSize: 13, background: '#131320', border: '1px solid #2a2a3d', borderRadius: 8, padding: '7px 12px 7px 32px', color: '#c4c4d4', outline: 'none', width: 220, transition: 'border-color 150ms ease' }}
-              onFocus={e => e.target.style.borderColor = '#7C6AF7'}
-              onBlur={e => e.target.style.borderColor = '#2a2a3d'}
-            />
-          </div>
+          <div style={{ flex: 1 }}/>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#131320', border: '1px solid #2a2a3d', borderRadius: 9, cursor: 'pointer', color: '#7a7a94', transition: 'border-color 150ms ease' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = '#4a4a68'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = '#2a2a3d'}
-            >
-              <Icon name="bell" size={16} />
-              <div style={{ position: 'absolute', top: 7, right: 8, width: 7, height: 7, borderRadius: '50%', background: '#7C6AF7', border: '2px solid #0a0a0f' }} />
-            </div>
             <Avatar initials={initials} size={36} />
           </div>
         </header>
@@ -771,9 +753,7 @@ export default function Dashboard() {
                       {weakPoints.map((w, i) => (
                         <div
                           key={i}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(248,113,113,0.08)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 500, padding: '5px 10px', cursor: 'pointer', transition: 'background 150ms ease' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.14)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(248,113,113,0.08)'}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(248,113,113,0.08)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 6, fontSize: 12, fontWeight: 500, padding: '5px 10px' }}
                         >
                           <Icon name="zap" size={11} color="#f87171" />
                           <div>
@@ -783,14 +763,6 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <button
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', background: 'rgba(248,113,113,0.1)', color: '#f87171', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease', marginTop: 16 }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.18)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
-                    >
-                      <Icon name="sparkles" size={13} color="#f87171" />
-                      Start review session
-                    </button>
                   </>
                 )}
               </section>
