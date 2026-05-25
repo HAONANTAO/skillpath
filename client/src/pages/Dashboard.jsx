@@ -149,103 +149,6 @@ function MobileSidebar({ active, onNav, open, onClose, onLogout, userName, initi
   );
 }
 
-function Heatmap() {
-  const weeks = 26;
-  const today = new Date();
-  const [tooltip, setTooltip] = useState(null);
-
-  const seed = (d) => {
-    let h = 0;
-    for (let i = 0; i < d.length; i++) h = Math.imul(31, h) + d.charCodeAt(i) | 0;
-    return Math.abs(h);
-  };
-
-  const data = {};
-  for (let w = 0; w < weeks; w++) {
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - ((weeks - 1 - w) * 7 + (6 - d)));
-      const key = date.toISOString().slice(0, 10);
-      const s = seed(key);
-      const weekday = date.getDay();
-      const isWeekend = weekday === 0 || weekday === 6;
-      const base = isWeekend ? 0.35 : 0.65;
-      const r = (s % 100) / 100;
-      let level = 0;
-      if (r < base * 0.25) level = 0;
-      else if (r < base * 0.55) level = 1;
-      else if (r < base * 0.78) level = 2;
-      else if (r < base * 0.92) level = 3;
-      else level = 4;
-      data[key] = { level, minutes: [0, 15, 35, 65, 120][level] };
-    }
-  }
-
-  const colors = ['#1a1a2e', 'rgba(124,106,247,0.25)', 'rgba(124,106,247,0.45)', 'rgba(124,106,247,0.7)', '#7C6AF7'];
-
-  const months = [];
-  for (let w = 0; w < weeks; w++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - ((weeks - 1 - w) * 7));
-    if (w === 0 || d.getMonth() !== new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((weeks - 1 - (w - 1)) * 7)).getMonth()) {
-      months.push({ week: w, label: d.toLocaleDateString('en-US', { month: 'short' }) });
-    }
-  }
-
-  const cols = [];
-  for (let w = 0; w < weeks; w++) {
-    const cells = [];
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - ((weeks - 1 - w) * 7 + (6 - d)));
-      const key = date.toISOString().slice(0, 10);
-      const entry = data[key] || { level: 0, minutes: 0 };
-      const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      cells.push(
-        <div
-          key={d}
-          style={{ width: 13, height: 13, borderRadius: 3, background: colors[entry.level], cursor: 'default', transition: 'opacity 150ms ease' }}
-          onMouseEnter={(e) => setTooltip({ label, minutes: entry.minutes, x: e.clientX, y: e.clientY })}
-          onMouseLeave={() => setTooltip(null)}
-        />
-      );
-    }
-    cols.push(<div key={w} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>{cells}</div>);
-  }
-
-  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', marginLeft: 24, marginBottom: 4, position: 'relative', height: 16 }}>
-        {months.map((m, i) => (
-          <div key={i} style={{ position: 'absolute', left: m.week * 15, fontSize: 11, color: '#7a7a94', fontWeight: 500 }}>{m.label}</div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {dayLabels.map((l, i) => (
-            <div key={i} style={{ width: 13, height: 13, fontSize: 10, color: i % 2 === 1 ? '#7a7a94' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{l}</div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
-          {cols}
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10, justifyContent: 'flex-end' }}>
-        <span style={{ fontSize: 11, color: '#7a7a94' }}>Less</span>
-        {colors.map((c, i) => <div key={i} style={{ width: 11, height: 11, borderRadius: 2, background: c }} />)}
-        <span style={{ fontSize: 11, color: '#7a7a94' }}>More</span>
-      </div>
-      {tooltip && (
-        <div style={{ position: 'fixed', left: tooltip.x + 12, top: tooltip.y - 36, background: '#1e1e30', border: '1px solid #2a2a3d', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: '#c4c4d4', pointerEvents: 'none', zIndex: 500, whiteSpace: 'nowrap', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-          <span style={{ color: '#fff', fontWeight: 600 }}>{tooltip.minutes > 0 ? `${tooltip.minutes} min` : 'No activity'}</span>
-          <span style={{ color: '#7a7a94' }}> — {tooltip.label}</span>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function StatCard({ icon, iconColor, iconBg, label, value, sub, delay = 0 }) {
   const [hovered, setHovered] = useState(false);
@@ -454,9 +357,21 @@ function PathCardSkeleton() {
   );
 }
 
-function ActivityItem({ icon, iconColor, iconBg, title, sub, time }) {
+function ActivityItem({ icon, iconColor, iconBg, title, sub, time, onClick }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #1e1e2e' }}>
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '10px 8px', margin: '0 -8px', borderRadius: 8,
+        cursor: onClick ? 'pointer' : 'default',
+        background: onClick && hovered ? 'rgba(124,106,247,0.06)' : 'transparent',
+        transition: 'background 150ms ease',
+      }}
+    >
       <div style={{ width: 34, height: 34, borderRadius: 9, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Icon name={icon} size={15} color={iconColor} />
       </div>
@@ -482,13 +397,52 @@ function deriveMeta(topic = '') {
   return { tag: 'General', tagColor: 'gray', color: '#7a7a94' }
 }
 
-const ACTIVITIES = [
-  { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: useEffect deep dive',      sub: 'React Fundamentals · Week 4',    time: '2h ago' },
-  { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: Async/await patterns',     sub: 'Node.js & REST APIs · Week 2',   time: 'Yesterday' },
-  { icon: 'trophy',       iconColor: '#f7c66a', iconBg: 'rgba(247,198,106,0.1)', title: 'Badge unlocked: Hook Master',         sub: 'Completed 5 hook-related weeks',  time: 'Yesterday' },
-  { icon: 'zap',          iconColor: '#7C6AF7', iconBg: 'rgba(124,106,247,0.1)', title: 'Quiz passed: Closures & scope',       sub: '9/10 correct · 90% accuracy',     time: '2d ago' },
-  { icon: 'check_circle', iconColor: '#34d399', iconBg: 'rgba(52,211,153,0.1)',   title: 'Completed: Event loop explained',     sub: 'Node.js & REST APIs · Week 1',   time: '2d ago' },
-];
+function timeAgo(iso) {
+  if (!iso) return ''
+  const ms = Date.now() - new Date(iso).getTime()
+  if (ms < 60_000)        return 'just now'
+  if (ms < 3_600_000)     return `${Math.floor(ms / 60_000)}m ago`
+  if (ms < 86_400_000)    return `${Math.floor(ms / 3_600_000)}h ago`
+  if (ms < 7 * 86_400_000) return `${Math.floor(ms / 86_400_000)}d ago`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// Derive real activity feed from the user's actual paths.
+// Each path contributes:
+//   - one "Created" event at path.createdAt
+//   - one "Completed Week N" event for each completed node (path.updatedAt as a best-effort timestamp)
+// then sort by time desc and take the 5 most recent.
+function buildActivityFeed(paths) {
+  const events = []
+  for (const p of paths) {
+    events.push({
+      pathId: p._id,
+      ts:     p.createdAt,
+      icon:   'sparkles',
+      iconColor: '#7C6AF7',
+      iconBg:    'rgba(124,106,247,0.1)',
+      title:     `Created path: ${p.topic}`,
+      sub:       `${p.weeks} weeks · ${p.progress}% complete`,
+    })
+    const done = (p.nodes || []).filter(n => n.status === 'complete')
+    if (done.length > 0) {
+      events.push({
+        pathId: p._id,
+        ts:     p.updatedAt || p.createdAt,
+        icon:   'check_circle',
+        iconColor: '#34d399',
+        iconBg:    'rgba(52,211,153,0.1)',
+        title:     `Completed Week ${done[done.length - 1].week}: ${p.topic}`,
+        sub:       `${done.length} of ${p.weeks} weeks done`,
+      })
+    }
+  }
+  return events
+    .filter(e => e.ts)
+    .sort((a, b) => new Date(b.ts) - new Date(a.ts))
+    .slice(0, 5)
+    .map(e => ({ ...e, time: timeAgo(e.ts) }))
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -600,6 +554,14 @@ export default function Dashboard() {
   })
 
   const weakPoints = realWeakConcepts.slice(0, 6).map(c => ({ label: c.concept, path: c.topic }))
+  const recentActivity = buildActivityFeed(realPaths)
+
+  function openPath(pathId, week = 1) {
+    if (!pathId) return
+    localStorage.setItem('learn_pathId', pathId)
+    localStorage.setItem('learn_week', String(week))
+    navigate('/learn', { state: { pathId, week } })
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#0a0a0f' }}>
@@ -718,13 +680,19 @@ export default function Dashboard() {
                   <h2 style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)' }}>Recent activity</h2>
                   <Icon name="clock" size={14} color="#7a7a94" />
                 </div>
-                <div>
-                  {ACTIVITIES.map((a, i) => (
-                    <div key={i} style={{ borderBottom: i < ACTIVITIES.length - 1 ? '1px solid #1e1e2e' : 'none' }}>
-                      <ActivityItem {...a} />
-                    </div>
-                  ))}
-                </div>
+                {recentActivity.length === 0 ? (
+                  <div style={{ fontSize: 13, color: '#7a7a94', padding: '14px 0' }}>
+                    No activity yet — create a path to get started.
+                  </div>
+                ) : (
+                  <div>
+                    {recentActivity.map((a, i) => (
+                      <div key={i} style={{ borderBottom: i < recentActivity.length - 1 ? '1px solid #1e1e2e' : 'none' }}>
+                        <ActivityItem {...a} onClick={() => openPath(a.pathId)} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Weak points */}
@@ -770,30 +738,55 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Heatmap */}
-          <section className="fade-up" style={{ background: '#131320', border: '1px solid #2a2a3d', borderRadius: 12, padding: '22px 24px', marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
-              <div>
-                <h2 style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', marginBottom: 3 }}>Learning activity</h2>
-                <p style={{ fontSize: 13, color: '#7a7a94' }}>Daily learning over the past 26 weeks</p>
+          {/* Path progress overview — clickable, jumps to each path's learning page */}
+          {realPaths.length > 0 && (
+            <section className="fade-up" style={{ background: '#131320', border: '1px solid #2a2a3d', borderRadius: 12, padding: '22px 24px', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
+                <div>
+                  <h2 style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', marginBottom: 3 }}>Path progress</h2>
+                  <p style={{ fontSize: 13, color: '#7a7a94' }}>Where you are across every path</p>
+                </div>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  {[
+                    [String(realPaths.length), realPaths.length === 1 ? 'path' : 'paths'],
+                    [String(totalWeeksCompleted), 'weeks done'],
+                    [String(realWeakConcepts.length), 'to review'],
+                  ].map(([v, l]) => (
+                    <div key={l} style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', lineHeight: 1 }}>{v}</div>
+                      <div style={{ fontSize: 11, color: '#7a7a94', marginTop: 2 }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 16 }}>
-                {[
-                  [String(realPaths.length * 7 || 0), 'paths active'],
-                  [String(totalWeeksCompleted), 'weeks done'],
-                  [String(realWeakConcepts.length), 'to review'],
-                ].map(([v, l]) => (
-                  <div key={l} style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', lineHeight: 1 }}>{v}</div>
-                    <div style={{ fontSize: 11, color: '#7a7a94', marginTop: 2 }}>{l}</div>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {realPaths.map(p => {
+                  const { color } = deriveMeta(p.topic)
+                  const completedWeeks = Math.round((p.progress / 100) * p.weeks)
+                  return (
+                    <button
+                      key={p._id}
+                      onClick={() => openPath(p._id, Math.min(p.weeks, completedWeeks + 1))}
+                      style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'transparent', border: '1px solid transparent', borderRadius: 8, padding: '10px 12px', cursor: 'pointer', fontFamily: 'var(--font-sans)', textAlign: 'left', transition: 'all 150ms ease' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,106,247,0.05)'; e.currentTarget.style.borderColor = '#2a2a3d' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent' }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.topic}</div>
+                          <div style={{ fontSize: 12, color: '#7a7a94', fontWeight: 500, flexShrink: 0 }}>
+                            Week {completedWeeks} of {p.weeks} · {p.progress}%
+                          </div>
+                        </div>
+                        <ProgressBar value={p.progress} color={color} height={5} />
+                      </div>
+                      <Icon name="arrow_right" size={14} color="#7a7a94" />
+                    </button>
+                  )
+                })}
               </div>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <Heatmap />
-            </div>
-          </section>
+            </section>
+          )}
 
         </main>
       </div>

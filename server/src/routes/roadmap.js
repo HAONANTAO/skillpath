@@ -120,9 +120,12 @@ router.post('/generate-stream', protect, async (req, res) => {
 
 // GET /api/roadmap/my-paths
 router.get('/my-paths', protect, async (req, res) => {
+  // Dashboard needs nodes[].week+status to derive recent completion events,
+  // and updatedAt to timestamp them. Other node detail (quizQuestions, etc.)
+  // is excluded so the list stays light.
   const paths = await LearningPath.find({ user: req.user._id })
     .sort({ createdAt: -1 })
-    .select('topic goal weeks progress createdAt')
+    .select('topic goal weeks progress createdAt updatedAt nodes.week nodes.status nodes.title')
   res.json({ paths })
 })
 
