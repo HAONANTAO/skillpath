@@ -327,9 +327,9 @@ export default function RoadmapGenerator() {
                 <input type="range" min={2} max={12} step={1} value={form.weeks} onChange={e => setForm(f=>({...f,weeks:parseInt(e.target.value)}))}
                   style={{ width:'100%',WebkitAppearance:'none',appearance:'none',background:'transparent',cursor:'pointer' }}/>
                 <style>{`input[type=range]::-webkit-slider-runnable-track{background:#2a2a3d;height:4px;border-radius:999px}input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#7C6AF7;margin-top:-7px;box-shadow:0 0 0 3px rgba(124,106,247,0.2)}`}</style>
-                <div style={{ display:'flex',justifyContent:'space-between',marginTop:6 }}>
+                <div style={{ display:'flex',justifyContent:'space-between',marginTop:8 }}>
                   {[2,4,6,8,10,12].map(w => (
-                    <span key={w} onClick={() => setForm(f=>({...f,weeks:w}))} style={{ fontSize:11,color:form.weeks===w?'var(--accent)':'#3a3a52',fontFamily:'var(--font-mono)',cursor:'pointer',transition:'color 150ms ease' }}>{w}w</span>
+                    <span key={w} onClick={() => setForm(f=>({...f,weeks:w}))} style={{ fontSize:11,color:form.weeks===w?'var(--accent)':'#7a7a94',fontFamily:'var(--font-sans)',fontWeight:form.weeks===w?600:500,cursor:'pointer',transition:'color 150ms ease' }}>{w} weeks</span>
                   ))}
                 </div>
               </div>
