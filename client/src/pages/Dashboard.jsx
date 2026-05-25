@@ -63,14 +63,10 @@ const Badge = ({ children, color = 'purple' }) => {
 };
 
 const NAV_MAIN = [
-  { id: 'dashboard',   icon: 'grid',    label: 'Dashboard' },
-  { id: 'paths',       icon: 'book',    label: 'My Paths' },
-  { id: 'explore',     icon: 'compass', label: 'Explore' },
-  { id: 'leaderboard', icon: 'trophy',  label: 'Leaderboard' },
+  { id: 'dashboard', icon: 'grid', label: 'Dashboard' },
 ];
 const NAV_BOTTOM = [
-  { id: 'profile',  icon: 'user',     label: 'Profile' },
-  { id: 'settings', icon: 'settings', label: 'Settings' },
+  { id: 'logout', icon: 'settings', label: 'Log out' },
 ];
 
 function SidebarContent({ active, onNav, onClose, onLogout, userName, initials }) {
@@ -108,11 +104,11 @@ function SidebarContent({ active, onNav, onClose, onLogout, userName, initials }
         {NAV_BOTTOM.map(item => (
           <div
             key={item.id}
-            onClick={item.id === 'settings' ? onLogout : undefined}
+            onClick={item.id === 'logout' ? onLogout : undefined}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease', color: '#7a7a94' }}
           >
             <Icon name={item.icon} size={15} />
-            {item.id === 'settings' ? 'Log out' : item.label}
+            {item.label}
           </div>
         ))}
       </div>
@@ -537,6 +533,18 @@ export default function Dashboard() {
       .catch(() => {})
       .finally(() => setLoadingWeak(false))
   }, [])
+
+  // The `.fade-up` class starts at opacity:0 and only reveals when `.visible`
+  // is added (LandingPage uses IntersectionObserver for this; Dashboard never
+  // wired it up, which is why every fade-up section — including path cards —
+  // rendered completely invisible). Reveal them after the layout has settled.
+  useEffect(() => {
+    if (loadingPaths) return
+    const t = setTimeout(() => {
+      document.querySelectorAll('.fade-up:not(.visible)').forEach(el => el.classList.add('visible'))
+    }, 30)
+    return () => clearTimeout(t)
+  }, [loadingPaths, realPaths.length])
 
   const totalWeeksCompleted = realPaths.reduce(
     (sum, p) => sum + Math.round((p.progress / 100) * p.weeks), 0
