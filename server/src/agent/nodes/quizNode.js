@@ -15,8 +15,13 @@ const QuestionSchema = z.object({
 })
 
 const QuizSchema = z.object({
-  questions: z.array(QuestionSchema).describe('Exactly 5 quiz questions'),
+  questions: z.array(QuestionSchema).min(1).max(10).describe('Quiz questions — exact count specified in the prompt'),
 })
+
+// First-pass quizzes cover the full topic broadly; retries are tighter and
+// focused on the weak concepts the learner already missed.
+const INITIAL_QUIZ_SIZE = 8
+const RETRY_QUIZ_SIZE   = 5
 
 const model = new ChatOpenAI({
   model: 'gpt-4o-mini',
@@ -30,7 +35,8 @@ export async function quizNode(state) {
     historicalWeakConcepts = [], // initial: past weak concepts from memory (gentle weight)
   } = state
   const { title, topics = [], quizFocus = '' } = currentNode
-  const isRetry = focusConcepts.length > 0
+  const isRetry     = focusConcepts.length > 0
+  const targetCount = isRetry ? RETRY_QUIZ_SIZE : INITIAL_QUIZ_SIZE
 
   // For initial quizzes, find concepts the user has historically struggled with that overlap with this node
   const relevantHistorical = isRetry
@@ -47,11 +53,11 @@ ${quizFocus ? `Quiz focus: ${quizFocus}` : ''}
 ${isRetry ? `\nThis is a RETRY quiz. The learner previously struggled with these concepts:
 ${focusConcepts.map(c => `- ${c}`).join('\n')}
 
-Generate exactly 5 multiple-choice questions that primarily target the weak concepts above. Approach them from different angles than a typical first-pass quiz (different examples, different framings) so the learner actually has to demonstrate understanding rather than recognize a memorized answer.` : `\nGenerate exactly 5 multiple-choice questions that test understanding of the above concepts.`}
+Generate exactly ${targetCount} multiple-choice questions that primarily target the weak concepts above. Approach them from different angles than a typical first-pass quiz (different examples, different framings) so the learner actually has to demonstrate understanding rather than recognize a memorized answer.` : `\nGenerate exactly ${targetCount} multiple-choice questions that test understanding of the above concepts.`}
 ${relevantHistorical.length > 0 ? `\nNote: This learner has previously struggled with related concepts: ${relevantHistorical.join(', ')}. Make sure at least 1 question covers these areas, but keep the overall quiz balanced across all topics.` : ''}
 
 Rules:
-- Questions should vary in difficulty (${isRetry ? '3 easy, 2 medium' : '2 easy, 2 medium, 1 hard'})
+- Questions should vary in difficulty (${isRetry ? '3 easy, 2 medium' : '3 easy, 3 medium, 2 hard'})
 - Each question must have exactly 4 options (A, B, C, D)
 - Only one option is correct
 - Distractors should be plausible, not obviously wrong
@@ -62,7 +68,7 @@ Rules:
   const { questions } = await model.invoke([{ role: 'user', content: prompt }])
 
   const letterToIndex = { A: 0, B: 1, C: 2, D: 3 }
-  const normalized = questions.slice(0, 5).map((q, i) => ({
+  const normalized = questions.slice(0, targetCount).map((q, i) => ({
     id:          i + 1,
     question:    q.question,
     options:     [q.options.A, q.options.B, q.options.C, q.options.D],
