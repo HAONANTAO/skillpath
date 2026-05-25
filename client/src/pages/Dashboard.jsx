@@ -38,6 +38,52 @@ const Avatar = ({ initials = 'U', size = 32 }) => (
   </div>
 );
 
+function ProfileMenu({ initials, email, name, onLogout }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener('click', close);
+    return () => window.removeEventListener('click', close);
+  }, [open]);
+
+  return (
+    <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        aria-label="Open profile menu"
+        aria-expanded={open}
+        style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', borderRadius: '50%', outline: open ? '2px solid #7C6AF7' : 'none', outlineOffset: 2, transition: 'outline-color 150ms ease' }}
+      >
+        <Avatar initials={initials} size={36} />
+      </button>
+
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, minWidth: 220, background: '#131320', border: '1px solid #2a2a3d', borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,0.5)', padding: 6, zIndex: 100, animation: 'fadeIn 150ms ease' }}>
+          <div style={{ padding: '10px 12px 12px', borderBottom: '1px solid #1e1e2e', marginBottom: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {name || 'SkillPath user'}
+            </div>
+            <div style={{ fontSize: 12, color: '#7a7a94', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {email || ''}
+            </div>
+          </div>
+          <button
+            onClick={() => { setOpen(false); onLogout(); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'transparent', border: 'none', padding: '8px 12px', borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#f87171', fontFamily: 'var(--font-sans)', cursor: 'pointer', textAlign: 'left' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <Icon name="settings" size={14} color="#f87171" />
+            Log out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const ProgressBar = ({ value, color = '#7C6AF7', height = 5, animated = false }) => (
   <div style={{ height, background: '#1e1e2e', borderRadius: height, overflow: 'hidden' }}>
     <div
@@ -63,7 +109,8 @@ const Badge = ({ children, color = 'purple' }) => {
 };
 
 const NAV_MAIN = [
-  { id: 'dashboard', icon: 'grid', label: 'Dashboard' },
+  { id: 'dashboard', icon: 'grid',     label: 'Dashboard', to: '/dashboard' },
+  { id: 'new-path',  icon: 'sparkles', label: 'New path',  to: '/roadmap'   },
 ];
 const NAV_BOTTOM = [
   { id: 'logout', icon: 'settings', label: 'Log out' },
@@ -87,13 +134,15 @@ function SidebarContent({ active, onNav, onClose, onLogout, userName, initials }
         {NAV_MAIN.map(item => (
           <div
             key={item.id}
-            onClick={() => { onNav(item.id); onClose?.(); }}
+            onClick={() => { onNav(item); onClose?.(); }}
             style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7,
               fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease',
               color: active === item.id ? '#fff' : '#7a7a94',
               background: active === item.id ? 'rgba(124,106,247,0.12)' : 'transparent',
             }}
+            onMouseEnter={e => { if (active !== item.id) e.currentTarget.style.background = 'rgba(124,106,247,0.06)' }}
+            onMouseLeave={e => { if (active !== item.id) e.currentTarget.style.background = 'transparent' }}
           >
             <Icon name={item.icon} size={15} color={active === item.id ? '#7C6AF7' : 'currentColor'} />
             {item.label}
@@ -567,11 +616,11 @@ export default function Dashboard() {
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#0a0a0f' }}>
       {/* Desktop sidebar */}
       <div className="desktop-sidebar-wrapper" style={{ height: '100%' }}>
-        <DesktopSidebar active={navActive} onNav={setNavActive} onLogout={handleLogout} userName={storedUser.name} initials={initials} />
+        <DesktopSidebar active={navActive} onNav={item => { setNavActive(item.id); if (item.to) navigate(item.to) }} onLogout={handleLogout} userName={storedUser.name} initials={initials} />
       </div>
 
       {/* Mobile drawer */}
-      <MobileSidebar active={navActive} onNav={setNavActive} open={mobileOpen} onClose={() => setMobileOpen(false)} onLogout={handleLogout} userName={storedUser.name} initials={initials} />
+      <MobileSidebar active={navActive} onNav={item => { setNavActive(item.id); if (item.to) navigate(item.to) }} open={mobileOpen} onClose={() => setMobileOpen(false)} onLogout={handleLogout} userName={storedUser.name} initials={initials} />
 
       {/* Main area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
@@ -594,7 +643,7 @@ export default function Dashboard() {
           <div style={{ flex: 1 }}/>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Avatar initials={initials} size={36} />
+            <ProfileMenu initials={initials} email={storedUser.email} name={storedUser.name} onLogout={handleLogout} />
           </div>
         </header>
 
