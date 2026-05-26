@@ -1,14 +1,15 @@
 # SkillPath
 
+### 🔗 [Live demo → skillpath-blond.vercel.app](https://skillpath-blond.vercel.app/)
+
 An adaptive AI learning-path generator. Tell it what you want to learn, and a
 LangGraph agent designs a week-by-week roadmap, fetches real resources, generates
 quizzes, evaluates your answers, and adapts to your weak spots — both within a
 path (retry with focused review) and across paths (Pinecone-backed long-term
 memory feeds back into the planner).
 
-> **Live demo:** https://skillpath-blond.vercel.app
->
 > First request might take ~30s — Render's free tier cold-starts the backend.
+> The full demo flow is documented in [§ Demo flow](#demo-flow) below.
 
 ## Why it's interesting
 
