@@ -15,6 +15,16 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/api/auth', authRoutes)
 app.use('/api/roadmap', roadmapRoutes)
 
+// Last-resort guards. Background async work (e.g. third-party SDK telemetry
+// after a handled error) can fire an unhandled rejection that would otherwise
+// take the whole process down. We log and keep serving.
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason)
+})
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err)
+})
+
 connectDB().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
 })

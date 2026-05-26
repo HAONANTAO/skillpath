@@ -3,6 +3,8 @@ import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
+import MyPaths from './pages/MyPaths'
+import WeakConcepts from './pages/WeakConcepts'
 import RoadmapGenerator from './pages/RoadmapGenerator'
 import LearningNode from './pages/LearningNode'
 import Quiz from './pages/Quiz'
@@ -22,8 +24,10 @@ export default function App() {
         <Route path="/roadmap" element={<ProtectedRoute><RoadmapGenerator /></ProtectedRoute>} />
         <Route path="/learn"   element={<ProtectedRoute><LearningNode /></ProtectedRoute>} />
         <Route path="/quiz"    element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/profile"   element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/dashboard"      element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/my-paths"       element={<ProtectedRoute><MyPaths /></ProtectedRoute>} />
+        <Route path="/weak-concepts"  element={<ProtectedRoute><WeakConcepts /></ProtectedRoute>} />
+        <Route path="/profile"        element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )

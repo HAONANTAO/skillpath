@@ -130,8 +130,10 @@ const Badge = ({ children, color = 'purple' }) => {
 };
 
 const NAV_MAIN = [
-  { id: 'dashboard', icon: 'grid',     label: 'Dashboard', to: '/dashboard' },
-  { id: 'new-path',  icon: 'sparkles', label: 'New path',  to: '/roadmap'   },
+  { id: 'dashboard',     icon: 'grid',         label: 'Dashboard',     to: '/dashboard' },
+  { id: 'new-path',      icon: 'sparkles',     label: 'New path',      to: '/roadmap'   },
+  { id: 'my-paths',      icon: 'book',         label: 'My paths',      to: '/my-paths'  },
+  { id: 'weak-concepts', icon: 'alert_circle', label: 'Weak concepts', to: '/weak-concepts' },
 ];
 const NAV_BOTTOM = [
   { id: 'profile', icon: 'user',     label: 'Profile', to: '/profile' },
