@@ -4,11 +4,9 @@ import {
   fetchMe, updateProfile, changePassword as apiChangePassword, clearAuth,
 } from '../services/authService.js'
 import { useToast } from '../components/Toast.jsx'
+import AppShell from '../components/AppShell.jsx'
 
 /* ── Icons ── */
-function ArrowLeft() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-}
 function MailIcon() {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
 }
@@ -126,21 +124,12 @@ export default function Profile() {
 
 /* ── Layout ── */
 function Shell({ children }) {
-  const navigate = useNavigate()
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg-base, #0a0a0f)', fontFamily: 'var(--font-sans)' }}>
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 24px 80px' }}>
-        <button
-          onClick={() => navigate('/dashboard')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: '#7a7a94', fontFamily: 'var(--font-sans)', fontSize: 13, cursor: 'pointer', padding: 0, marginBottom: 24 }}
-          onMouseEnter={e => e.currentTarget.style.color = '#c4c4d4'}
-          onMouseLeave={e => e.currentTarget.style.color = '#7a7a94'}
-        >
-          <ArrowLeft/> Back to dashboard
-        </button>
+    <AppShell active="profile">
+      <div style={{ maxWidth: 680, margin: '0 auto', fontFamily: 'var(--font-sans)' }}>
         {children}
       </div>
-    </div>
+    </AppShell>
   )
 }
 
