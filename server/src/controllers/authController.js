@@ -9,6 +9,15 @@ const signToken = (id) =>
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   })
 
+// Shape returned to the client on every auth handshake.
+// Kept in sync with what the frontend stores in localStorage.
+const publicUser = (u) => ({
+  id:        u._id,
+  email:     u.email,
+  name:      u.name,
+  avatarUrl: u.avatarUrl,
+})
+
 // Reused across requests — cheap to keep around
 let _googleClient = null
 function getGoogleClient() {
@@ -37,7 +46,7 @@ export async function register(req, res) {
 
     res.status(201).json({
       token,
-      user: { id: user._id, email: user.email, name: user.name },
+      user: publicUser(user),
     })
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message })
@@ -61,22 +70,88 @@ export async function login(req, res) {
 
     res.json({
       token,
-      user: { id: user._id, email: user.email, name: user.name },
+      user: publicUser(user),
     })
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message })
   }
 }
 
+// Returns the full profile shape used by the Profile page. `hasPassword`
+// tells the UI whether to show a "change password" form (Google-only users
+// haven't set one yet, so they'd have nothing to compare against).
 export async function me(req, res) {
+  const u = req.user
+  // password is select:false on the schema; do a tiny extra query to know
+  // whether to surface the change-password form on the client
+  const pwdDoc = await User.findById(u._id).select('+password').lean()
   res.json({
     user: {
-      id:              req.user._id,
-      email:           req.user.email,
-      name:            req.user.name,
-      dailyTokensUsed: req.user.dailyTokensUsed,
+      id:              u._id,
+      email:           u.email,
+      name:            u.name,
+      avatarUrl:       u.avatarUrl,
+      googleLinked:    Boolean(u.googleId),
+      hasPassword:     Boolean(pwdDoc?.password),
+      createdAt:       u.createdAt,
+      dailyTokensUsed: u.dailyTokensUsed,
     },
   })
+}
+
+// PATCH /api/auth/me — currently only name is user-editable
+export async function updateMe(req, res) {
+  const { name } = req.body
+  if (typeof name !== 'string') {
+    return res.status(400).json({ message: 'Name must be a string' })
+  }
+  const trimmed = name.trim()
+  if (trimmed.length > 60) {
+    return res.status(400).json({ message: 'Name must be 60 characters or fewer' })
+  }
+
+  try {
+    req.user.name = trimmed
+    await req.user.save()
+    res.json({
+      user: {
+        id:        req.user._id,
+        email:     req.user.email,
+        name:      req.user.name,
+        avatarUrl: req.user.avatarUrl,
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message })
+  }
+}
+
+// POST /api/auth/change-password — requires current password unless the user
+// has no password yet (Google-only) in which case this is the first set.
+export async function changePassword(req, res) {
+  const { currentPassword, newPassword } = req.body
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters' })
+  }
+
+  try {
+    const user = await User.findById(req.user._id).select('+password')
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    if (user.password) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Current password is required' })
+      }
+      const ok = await user.comparePassword(currentPassword)
+      if (!ok) return res.status(401).json({ message: 'Current password is incorrect' })
+    }
+
+    user.password = newPassword
+    await user.save()
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message })
+  }
 }
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
@@ -111,7 +186,7 @@ export async function googleLogin(req, res) {
       return res.status(401).json({ message: 'Google account email is not verified' })
     }
 
-    const { sub: googleId, email, name } = profile
+    const { sub: googleId, email, name, picture } = profile
 
     // Step 3: lookup by googleId first; fall back to email so existing password
     // users can also sign in with Google (we attach the googleId on first use)
@@ -121,16 +196,21 @@ export async function googleLogin(req, res) {
       if (user) {
         user.googleId = googleId
         if (!user.name && name) user.name = name
+        if (picture) user.avatarUrl = picture // refresh on every Google sign-in
         await user.save()
       } else {
-        user = await User.create({ googleId, email, name: name || '' })
+        user = await User.create({ googleId, email, name: name || '', avatarUrl: picture || '' })
       }
+    } else if (picture && user.avatarUrl !== picture) {
+      // Refresh Google avatar if it changed since last sign-in
+      user.avatarUrl = picture
+      await user.save()
     }
 
     const token = signToken(user._id)
     res.json({
       token,
-      user: { id: user._id, email: user.email, name: user.name },
+      user: publicUser(user),
     })
   } catch (err) {
     console.error('[googleLogin]', err.message)
@@ -206,7 +286,7 @@ export async function resetPassword(req, res) {
     const authToken = signToken(user._id)
     res.json({
       token: authToken,
-      user: { id: user._id, email: user.email, name: user.name },
+      user: publicUser(user),
     })
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message })

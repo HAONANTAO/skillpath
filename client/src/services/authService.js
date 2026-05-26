@@ -31,6 +31,34 @@ export async function resetPassword(token, password) {
   return request('/reset-password', { token, password })
 }
 
+// Authenticated profile helpers
+async function authedRequest(path, { method = 'GET', body } = {}) {
+  const token = getToken()
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.message || 'Something went wrong')
+  return data
+}
+
+export async function fetchMe() {
+  return authedRequest('/me')
+}
+
+export async function updateProfile({ name }) {
+  return authedRequest('/me', { method: 'PATCH', body: { name } })
+}
+
+export async function changePassword({ currentPassword, newPassword }) {
+  return authedRequest('/change-password', { method: 'POST', body: { currentPassword, newPassword } })
+}
+
 export function saveAuth(token, user) {
   localStorage.setItem('token', token)
   localStorage.setItem('user', JSON.stringify(user))

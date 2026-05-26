@@ -32,13 +32,25 @@ const Icon = ({ name, size = 16, color = 'currentColor', sw = 2 }) => (
   </svg>
 );
 
-const Avatar = ({ initials = 'U', size = 32 }) => (
-  <div style={{ width: size, height: size, borderRadius: '50%', background: 'linear-gradient(135deg,#7C6AF7,#5a4fd4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.36, fontWeight: 700, color: '#fff', flexShrink: 0, letterSpacing: '-0.01em' }}>
-    {initials}
-  </div>
-);
+const Avatar = ({ initials = 'U', size = 32, src = '' }) => {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        referrerPolicy="no-referrer"
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, background: '#1a1a2e' }}
+      />
+    );
+  }
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', background: 'linear-gradient(135deg,#7C6AF7,#5a4fd4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.36, fontWeight: 700, color: '#fff', flexShrink: 0, letterSpacing: '-0.01em' }}>
+      {initials}
+    </div>
+  );
+};
 
-function ProfileMenu({ initials, email, name, onLogout }) {
+function ProfileMenu({ initials, email, name, avatarUrl, onLogout, onViewProfile }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -56,7 +68,7 @@ function ProfileMenu({ initials, email, name, onLogout }) {
         aria-expanded={open}
         style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', borderRadius: '50%', outline: open ? '2px solid #7C6AF7' : 'none', outlineOffset: 2, transition: 'outline-color 150ms ease' }}
       >
-        <Avatar initials={initials} size={36} />
+        <Avatar initials={initials} size={36} src={avatarUrl} />
       </button>
 
       {open && (
@@ -69,6 +81,15 @@ function ProfileMenu({ initials, email, name, onLogout }) {
               {email || ''}
             </div>
           </div>
+          <button
+            onClick={() => { setOpen(false); onViewProfile(); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'transparent', border: 'none', padding: '8px 12px', borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#c4c4d4', fontFamily: 'var(--font-sans)', cursor: 'pointer', textAlign: 'left' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,106,247,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <Icon name="user" size={14} color="#c4c4d4" />
+            View profile
+          </button>
           <button
             onClick={() => { setOpen(false); onLogout(); }}
             style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'transparent', border: 'none', padding: '8px 12px', borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#f87171', fontFamily: 'var(--font-sans)', cursor: 'pointer', textAlign: 'left' }}
@@ -113,10 +134,11 @@ const NAV_MAIN = [
   { id: 'new-path',  icon: 'sparkles', label: 'New path',  to: '/roadmap'   },
 ];
 const NAV_BOTTOM = [
-  { id: 'logout', icon: 'settings', label: 'Log out' },
+  { id: 'profile', icon: 'user',     label: 'Profile', to: '/profile' },
+  { id: 'logout',  icon: 'settings', label: 'Log out' },
 ];
 
-function SidebarContent({ active, onNav, onClose, onLogout, userName, initials }) {
+function SidebarContent({ active, onNav, onClose, onLogout, userName, initials, avatarUrl }) {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: 28 }}>
@@ -153,16 +175,21 @@ function SidebarContent({ active, onNav, onClose, onLogout, userName, initials }
         {NAV_BOTTOM.map(item => (
           <div
             key={item.id}
-            onClick={item.id === 'logout' ? onLogout : undefined}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease', color: '#7a7a94' }}
+            onClick={() => {
+              if (item.id === 'logout') onLogout()
+              else if (item.to) { onNav(item); onClose?.() }
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease', color: active === item.id ? '#fff' : '#7a7a94', background: active === item.id ? 'rgba(124,106,247,0.12)' : 'transparent' }}
+            onMouseEnter={e => { if (active !== item.id) e.currentTarget.style.background = 'rgba(124,106,247,0.06)' }}
+            onMouseLeave={e => { if (active !== item.id) e.currentTarget.style.background = 'transparent' }}
           >
-            <Icon name={item.icon} size={15} />
+            <Icon name={item.icon} size={15} color={active === item.id ? '#7C6AF7' : 'currentColor'} />
             {item.label}
           </div>
         ))}
       </div>
       <div style={{ borderTop: '1px solid #1e1e2e', paddingTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Avatar initials={initials} size={32} />
+        <Avatar initials={initials} size={32} src={avatarUrl} />
         <div>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{userName || 'Loading…'}</div>
           <div style={{ fontSize: 11, color: '#7a7a94' }}>SkillPath</div>
@@ -172,15 +199,15 @@ function SidebarContent({ active, onNav, onClose, onLogout, userName, initials }
   );
 }
 
-function DesktopSidebar({ active, onNav, onLogout, userName, initials }) {
+function DesktopSidebar({ active, onNav, onLogout, userName, initials, avatarUrl }) {
   return (
     <aside style={{ width: 220, background: '#0f0f1a', borderRight: '1px solid #1e1e2e', display: 'flex', flexDirection: 'column', height: '100%', flexShrink: 0, padding: '20px 12px' }}>
-      <SidebarContent active={active} onNav={onNav} onLogout={onLogout} userName={userName} initials={initials} />
+      <SidebarContent active={active} onNav={onNav} onLogout={onLogout} userName={userName} initials={initials} avatarUrl={avatarUrl} />
     </aside>
   );
 }
 
-function MobileSidebar({ active, onNav, open, onClose, onLogout, userName, initials }) {
+function MobileSidebar({ active, onNav, open, onClose, onLogout, userName, initials, avatarUrl }) {
   return (
     <>
       {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 299 }} />}
@@ -192,7 +219,7 @@ function MobileSidebar({ active, onNav, open, onClose, onLogout, userName, initi
         transform: open ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 250ms cubic-bezier(0.16,1,0.3,1)',
       }}>
-        <SidebarContent active={active} onNav={onNav} onClose={onClose} onLogout={onLogout} userName={userName} initials={initials} />
+        <SidebarContent active={active} onNav={onNav} onClose={onClose} onLogout={onLogout} userName={userName} initials={initials} avatarUrl={avatarUrl} />
       </aside>
     </>
   );
@@ -616,11 +643,11 @@ export default function Dashboard() {
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#0a0a0f' }}>
       {/* Desktop sidebar */}
       <div className="desktop-sidebar-wrapper" style={{ height: '100%' }}>
-        <DesktopSidebar active={navActive} onNav={item => { setNavActive(item.id); if (item.to) navigate(item.to) }} onLogout={handleLogout} userName={storedUser.name} initials={initials} />
+        <DesktopSidebar active={navActive} onNav={item => { setNavActive(item.id); if (item.to) navigate(item.to) }} onLogout={handleLogout} userName={storedUser.name} initials={initials} avatarUrl={storedUser.avatarUrl} />
       </div>
 
       {/* Mobile drawer */}
-      <MobileSidebar active={navActive} onNav={item => { setNavActive(item.id); if (item.to) navigate(item.to) }} open={mobileOpen} onClose={() => setMobileOpen(false)} onLogout={handleLogout} userName={storedUser.name} initials={initials} />
+      <MobileSidebar active={navActive} onNav={item => { setNavActive(item.id); if (item.to) navigate(item.to) }} open={mobileOpen} onClose={() => setMobileOpen(false)} onLogout={handleLogout} userName={storedUser.name} initials={initials} avatarUrl={storedUser.avatarUrl} />
 
       {/* Main area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
@@ -643,7 +670,14 @@ export default function Dashboard() {
           <div style={{ flex: 1 }}/>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ProfileMenu initials={initials} email={storedUser.email} name={storedUser.name} onLogout={handleLogout} />
+            <ProfileMenu
+              initials={initials}
+              email={storedUser.email}
+              name={storedUser.name}
+              avatarUrl={storedUser.avatarUrl}
+              onLogout={handleLogout}
+              onViewProfile={() => navigate('/profile')}
+            />
           </div>
         </header>
 

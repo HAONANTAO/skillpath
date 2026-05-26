@@ -27,6 +27,12 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true, // allow multiple null values (email-only users)
     },
+    // Optional avatar URL — populated from Google OAuth `picture` field.
+    // Email/password users fall back to gradient-initials rendering on the client.
+    avatarUrl: {
+      type: String,
+      default: '',
+    },
     // Password reset: SHA-256 hash of the random token (never store raw)
     resetTokenHash: {
       type: String,

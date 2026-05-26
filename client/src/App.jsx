@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
+import Profile from './pages/Profile'
 import RoadmapGenerator from './pages/RoadmapGenerator'
 import LearningNode from './pages/LearningNode'
 import Quiz from './pages/Quiz'
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/learn"   element={<ProtectedRoute><LearningNode /></ProtectedRoute>} />
         <Route path="/quiz"    element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/profile"   element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )
