@@ -6,6 +6,10 @@ quizzes, evaluates your answers, and adapts to your weak spots — both within a
 path (retry with focused review) and across paths (Pinecone-backed long-term
 memory feeds back into the planner).
 
+> **Live demo:** https://skillpath-blond.vercel.app
+>
+> First request might take ~30s — Render's free tier cold-starts the backend.
+
 ## Why it's interesting
 
 Most "AI learning path" projects stop at "ask an LLM to outline weeks 1–N."
@@ -31,65 +35,73 @@ SkillPath does three things that go further:
 │  React (Vite)   │ ──────► │  Express + LangGraph agents             │
 │  client/        │  HTTP / │  server/                                │
 │                 │   SSE   │                                         │
-│  · Dashboard    │ ◄────── │  /api/auth          JWT auth            │
-│  · Roadmap gen  │         │  /api/roadmap/*     paths + nodes       │
-│  · Learn node   │         │                                         │
-│  · Quiz         │         │  Agents:                                │
-└─────────────────┘         │   plannerGraph:  memory → planner       │
-                            │   quizGraph:     memory → quiz          │
-                            │   retryGraph:    researcher ∥ quiz      │
-                            │   evaluatorNode  (direct call)          │
+│  · Dashboard    │ ◄────── │  /api/auth          JWT + Google OAuth  │
+│  · My paths     │         │  /api/roadmap/*     paths + nodes       │
+│  · Weak concepts│         │                                         │
+│  · Profile      │         │  Agents:                                │
+│  · Roadmap gen  │         │   plannerGraph:  memory → planner       │
+│  · Learn node   │         │   quizGraph:     memory → quiz          │
+│  · Quiz         │         │   retryGraph:    researcher ∥ quiz      │
+└─────────────────┘         │   evaluatorNode  (direct call)          │
                             └────────────┬────────────────────────────┘
                                          │
-                ┌────────────────┬───────┴────────┬─────────────────┐
-                ▼                ▼                ▼                 ▼
-          ┌──────────┐    ┌────────────┐   ┌────────────┐   ┌────────────┐
-          │ MongoDB  │    │  OpenAI    │   │  Tavily    │   │  Pinecone  │
-          │ (paths,  │    │  (gpt-4o,  │   │  (web      │   │  (weak-    │
-          │  users)  │    │  gpt-4o-   │   │  search    │   │  concept   │
-          │          │    │  mini, em- │   │  for       │   │  memory)   │
-          │          │    │  beddings) │   │  resources)│   │            │
-          └──────────┘    └────────────┘   └────────────┘   └────────────┘
+                ┌───────────┬────────────┼────────────┬───────────┐
+                ▼           ▼            ▼            ▼           ▼
+          ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+          │ MongoDB  │ │  OpenAI  │ │  Tavily  │ │ Pinecone │ │  Resend  │
+          │ (paths,  │ │ (gpt-4o, │ │  (web    │ │ (weak-   │ │  (reset  │
+          │  users)  │ │ gpt-4o-  │ │  search) │ │  concept │ │   email) │
+          │          │ │ mini,    │ │          │ │  memory) │ │          │
+          │          │ │ embeds)  │ │          │ │          │ │          │
+          └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘
 ```
 
 ## Tech stack
 
 **Frontend**
 - React 19 + Vite + React Router 7
+- `@react-oauth/google` for Google sign-in (implicit OAuth flow)
 - Tailwind 4 (via `@tailwindcss/vite`)
-- Plain CSS for the design system (no UI library — all components hand-rolled)
+- Plain CSS for the design system — no UI library, all components hand-rolled
+- Shared `AppShell` provides sidebar + topbar + mobile drawer for every
+  authenticated page
 
 **Backend**
 - Express 4
 - `@langchain/langgraph` 1.x for agent orchestration
 - `@langchain/openai` for the chat models with structured (Zod) output
+- `google-auth-library` to verify Google access tokens server-side
+- `resend` for transactional email (password reset)
 - Mongoose for MongoDB
 - JWT auth (`bcryptjs` + `jsonwebtoken`)
 - Server-Sent Events for streaming Planner progress
+- vitest for unit tests (evaluator, memory service)
 
 **External services**
-- OpenAI (gpt-4o for planner, gpt-4o-mini for quiz, text-embedding-3-small for memory)
+- OpenAI (gpt-4o for planner, gpt-4o-mini for quiz, text-embedding-3-small)
 - Tavily (web search for learning resources)
-- Pinecone (vector store for weak-concept memory; serverless index, cosine)
+- Pinecone (vector store for weak-concept memory; serverless, cosine)
+- Google OAuth (sign-in)
+- Resend (transactional email)
 - MongoDB Atlas
 
 ## Setup
 
-You'll need accounts on OpenAI, Tavily, Pinecone, and MongoDB Atlas. Free tiers
-work for all four.
+You'll need accounts on OpenAI, Tavily, Pinecone, MongoDB Atlas, Google Cloud
+(for OAuth client), and Resend. Free tiers work for all of them.
 
 ```bash
 git clone <this repo>
 cd skillpath
 
-# Install root + client + server in one go
+# Install root + client + server
 npm install
 npm install --prefix client
 npm install --prefix server
 
 # Configure server env
 cp server/.env.example server/.env
-# then fill in the keys — see below
+# fill in the keys — see below
 ```
 
 ### Environment variables (`server/.env`)
@@ -99,25 +111,51 @@ PORT=5001
 MONGO_URI=mongodb+srv://<user>:<pw>@cluster.mongodb.net/skillpath?retryWrites=true&w=majority
 JWT_SECRET=<a long random string>
 JWT_EXPIRES_IN=7d
+
+# Where the frontend lives — used for CORS and for building password-reset links
 CLIENT_ORIGIN=http://localhost:5173
+APP_URL=http://localhost:5173
+
+# Model + data providers
 OPENAI_API_KEY=sk-...
 TAVILY_API_KEY=tvly-...
 PINECONE_API_KEY=pcsk-...
+
+# Google OAuth — Web application client ID from console.cloud.google.com
+GOOGLE_CLIENT_ID=xxx-yyy.apps.googleusercontent.com
+
+# Transactional email — resend.com/api-keys
+RESEND_API_KEY=re_...
+# Sandbox sender is fine for demos; verify a domain in Resend before sending
+# password resets to arbitrary users in production.
+EMAIL_FROM=SkillPath <onboarding@resend.dev>
 ```
 
-Note: MongoDB Atlas requires the running machine's IP to be in the Network
-Access whitelist. The Pinecone index (`skillpath-memory`) is auto-created on
-first write — no manual setup needed.
+Frontend reads the Google client ID from `client/src/config.js` (or the
+`VITE_GOOGLE_CLIENT_ID` env override). It's a public value so checking it
+into source is fine.
+
+### One-time external setup
+
+- **MongoDB Atlas → Network Access**: add your dev IP (or `0.0.0.0/0` for
+  serverless backends like Render).
+- **Pinecone**: nothing to do — the index `skillpath-memory` is auto-created
+  on first write.
+- **Google Cloud → APIs & Services → Credentials → OAuth client (Web)**:
+  add `http://localhost:5173` and your production URL to *Authorized
+  JavaScript origins*. Under *OAuth consent screen → Audience*, add yourself
+  as a Test user while the project is in "Testing" mode.
+- **Resend → API keys**: create a key with Full access. Sandbox mode can
+  only send to the email you registered with — verify a domain at
+  `resend.com/domains` to send to anyone.
 
 ### Run
 
 ```bash
-# From repo root — runs client and server concurrently
-npm run dev
-
-# Or individually
-npm run client   # Vite dev server on http://localhost:5173
-npm run server   # Express + nodemon on http://localhost:5001
+npm run dev                # client + server concurrently
+# or:
+npm run client             # Vite on :5173
+npm run server             # Express + nodemon on :5001
 ```
 
 The Vite dev server proxies `/api/*` to `:5001`, so the frontend just calls
@@ -125,17 +163,19 @@ relative paths.
 
 ## Demo flow
 
-1. **Register** at `/login`.
+1. **Sign in** at `/login` — either email/password (Create one) or
+   **Continue with Google**.
 2. **Generate a roadmap** for something concrete (e.g. "React basics", 4 weeks).
    The loader is a live timeline of agent steps — you'll see "Loading your
    learning history…", "Designing your weekly roadmap…", etc., streamed over SSE.
 3. **Open Week 1**, scroll through the Tavily-fetched resources, and **take the
-   quiz**.
+   quiz** (8 multiple-choice questions on first attempt).
 4. **Deliberately get ≥3 questions wrong.** On the score screen, the
    **Adaptive retry** CTA appears (purple, with a sparkles icon).
 5. Click it. The `retryGraph` runs Researcher and Quiz in parallel. A "Quick
    review first" card appears with 3 fresh resources targeting your wrong
-   concepts, plus a "Start focused retry" button that loads a new, focused quiz.
+   concepts, plus a "Start focused retry" button that loads a new, focused
+   5-question quiz.
 6. Pass the retry → next week unlocks.
 7. **Finish all weeks** → the final ScoreScreen shows a celebration card
    ("🎉 Path complete") with CTAs back to the dashboard or to start a new path.
@@ -143,14 +183,17 @@ relative paths.
    says something like *"Found 3 past weak spots — Planner will address them"* —
    the Planner has pulled your historical weak concepts from Pinecone and is
    shaping the new roadmap around them.
+9. **Visit `/my-paths` and `/weak-concepts`** to see the consolidated views.
+   `/profile` lets you change your display name and password (or set one for
+   the first time if you signed up via Google).
 
 ## Deployment
 
 The split-deploy below is what I use: frontend on Vercel (free), backend on
 Render (free), MongoDB Atlas (free), and the existing Pinecone / OpenAI /
-Tavily accounts. Total monthly cost: $0, with the caveat that Render's free
-tier spins down after 15 minutes of inactivity (first request after that
-takes ~30 seconds).
+Tavily / Resend / Google Cloud accounts. Total monthly cost: $0, with the
+caveat that Render's free tier spins down after 15 minutes of inactivity
+(first request after that takes ~30 seconds).
 
 ### Backend → Render
 
@@ -163,9 +206,9 @@ takes ~30 seconds).
    - **Node version**: 20+ (set `NODE_VERSION=20.20.2` in env if needed)
 4. Add all the env vars from `server/.env.example`:
    - `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `OPENAI_API_KEY`,
-     `TAVILY_API_KEY`, `PINECONE_API_KEY`
-   - `CLIENT_ORIGIN` → your Vercel URL once you have it (you can come back
-     and set this after step 2 of the frontend section)
+     `TAVILY_API_KEY`, `PINECONE_API_KEY`, `GOOGLE_CLIENT_ID`,
+     `RESEND_API_KEY`, `EMAIL_FROM`
+   - `CLIENT_ORIGIN` and `APP_URL` → your Vercel URL once you have it.
    - **Don't** set `PORT` — Render injects its own.
 5. In MongoDB Atlas → Network Access, add `0.0.0.0/0` (or Render's outbound
    IPs) so the Render dyno can connect.
@@ -174,101 +217,164 @@ takes ~30 seconds).
 
 ### Frontend → Vercel
 
-1. Edit `client/vercel.json` and replace the `REPLACE-WITH-YOUR-BACKEND`
-   placeholder with the Render URL from the previous step. Commit + push.
+1. Edit `client/vercel.json` and replace the placeholder backend URL with
+   your Render URL. Commit + push.
 2. In Vercel, **Add New → Project**, pick the repo.
 3. Settings:
    - **Root directory**: `client`
-   - The rest (framework, build command, output dir) is auto-detected from
+   - Framework, build command, and output dir are auto-detected from
      `vercel.json`.
 4. Deploy. You'll get a URL like `https://skillpath.vercel.app`.
-5. Go back to Render and set `CLIENT_ORIGIN` to that URL, then redeploy the
-   backend (or just restart it — env changes don't always trigger an
-   auto-redeploy on Render's free tier).
+5. In Google Cloud → OAuth client → *Authorized JavaScript origins*, add
+   your production Vercel URL.
+6. Go back to Render and set `CLIENT_ORIGIN` + `APP_URL` to your Vercel URL,
+   then redeploy the backend.
 
 ### Why the rewrite
 
 The frontend code calls `/api/*` directly. In dev, Vite proxies that to
-`localhost:5001`. In production, Vercel's `vercel.json` rewrite forwards
-`/api/*` to the Render backend. Same code path, no `VITE_API_URL`
-indirection, and the browser sees same-origin requests so CORS isn't on the
-critical path. Vercel rewrites are pass-through, so the SSE streaming
-endpoint (`/api/roadmap/generate-stream`) keeps working without buffering.
+`localhost:5001`. In production, `client/vercel.json` rewrites `/api/*` to
+the Render backend, with a catch-all `/((?!api/).*)` rewrite to `/index.html`
+so deep links (`/dashboard`, `/profile`, etc.) survive a hard refresh.
+Same-origin from the browser's POV, so CORS isn't on the critical path, and
+Vercel rewrites are pass-through so the SSE streaming endpoint
+(`/api/roadmap/generate-stream`) keeps working without buffering.
 
 ### Avoiding cold starts on Render free
 
 Either pay $7/mo for Render Starter (always-on), or set up a free uptime
-pinger (e.g. UptimeRobot, cron-job.org) hitting `https://your-backend/api/health`
-every 10 minutes during demo hours.
+pinger (UptimeRobot, cron-job.org) hitting
+`https://your-backend/api/health` every 10 minutes during demo hours.
 
 ## Project layout
 
 ```
 skillpath/
 ├── client/                          React + Vite frontend
+│   ├── vercel.json                  Vercel config: /api rewrite + SPA fallback
 │   └── src/
-│       ├── pages/                   LandingPage, Login, Dashboard,
-│       │                            RoadmapGenerator, LearningNode, Quiz
-│       └── services/authService.js  JWT token helpers
+│       ├── App.jsx                  Routes + ProtectedRoute
+│       ├── config.js                Google client ID
+│       ├── components/
+│       │   ├── AppShell.jsx         Shared sidebar + topbar + mobile drawer
+│       │   └── Toast.jsx            Toast provider + useToast hook
+│       ├── lib/
+│       │   └── pathHelpers.js       deriveMeta() + timeAgo()
+│       ├── pages/
+│       │   ├── LandingPage.jsx
+│       │   ├── Login.jsx            Email/password + Google + Forgot link
+│       │   ├── ResetPassword.jsx    Token-from-URL form, auto-signs in
+│       │   ├── Dashboard.jsx        Stats, recent activity, path progress
+│       │   ├── MyPaths.jsx          List view: search / filter / sort / bulk
+│       │   ├── WeakConcepts.jsx     Cross-path weak concepts grouped by topic
+│       │   ├── Profile.jsx          Name + password + avatar
+│       │   ├── RoadmapGenerator.jsx Streaming generator with live agent log
+│       │   ├── LearningNode.jsx     Per-week content + resources
+│       │   └── Quiz.jsx             Quiz UI + adaptive retry flow
+│       └── services/authService.js  JWT token helpers + auth API client
 │
 ├── server/                          Express + LangGraph backend
 │   └── src/
-│       ├── index.js                 server entry point
+│       ├── index.js                 entry point, process-level error guards
 │       ├── config/db.js             Mongo connection
 │       ├── middleware/auth.js       JWT verification
 │       ├── models/
-│       │   ├── User.js
+│       │   ├── User.js              email, password (optional), googleId,
+│       │   │                        avatarUrl, resetToken*, name
 │       │   └── LearningPath.js      paths + nested learning nodes
 │       ├── routes/
-│       │   ├── auth.js              register / login
+│       │   ├── auth.js              register, login, /me, PATCH /me,
+│       │   │                        google, forgot/reset-password,
+│       │   │                        change-password
 │       │   └── roadmap.js           generate, generate-stream, my-paths,
 │       │                            quiz, retry, evaluate, weak-concepts,
 │       │                            DELETE / PATCH path
+│       ├── controllers/
+│       │   └── authController.js
 │       ├── agent/
 │       │   ├── graph.js             StateGraph definitions
 │       │   │                        (plannerGraph, quizGraph, retryGraph)
 │       │   ├── state.js             SkillPathState annotation
 │       │   └── nodes/
-│       │       ├── plannerNode.js   gpt-4o, weeks × LearningNode (Zod)
+│       │       ├── plannerNode.js   gpt-4o, weeks × LearningNode (Zod),
+│       │       │                    accepts historicalWeakConcepts
 │       │       ├── researcherNode.js Tavily search, classified resources
-│       │       ├── quizNode.js      gpt-4o-mini, 5 MCQs with concept tags
+│       │       ├── quizNode.js      gpt-4o-mini, 8 MCQs (initial) / 5 (retry)
+│       │       │                    with concept tags
 │       │       └── evaluatorNode.js scores, updates path, stores wrong
-│       │                            concepts to Pinecone
-│       └── services/
-│           └── memoryService.js     Pinecone + OpenAI embeddings
-│                                    (storeWeakConcept, getWeakConcepts)
+│       │                            concepts to Pinecone, marks pathComplete
+│       ├── services/
+│       │   ├── memoryService.js     Pinecone + OpenAI embeddings
+│       │   └── emailService.js      Resend wrapper (sendPasswordResetEmail)
+│       └── __tests__/               vitest unit tests
+│           ├── evaluatorNode.test.js
+│           └── memoryService.test.js
 │
 └── SkillPathDesign/                 Design references (Figma exports)
 ```
 
 ## API surface (auth required unless noted)
 
+### Auth (`/api/auth`)
+
 | Method | Path | What it does |
 |---|---|---|
-| `POST` | `/api/auth/register` | Create user, return JWT *(no auth)* |
-| `POST` | `/api/auth/login` | Return JWT *(no auth)* |
-| `POST` | `/api/roadmap/generate` | One-shot roadmap generation (returns when done) |
-| `POST` | `/api/roadmap/generate-stream` | SSE: streams per-node progress |
-| `GET` | `/api/roadmap/my-paths` | List the user's paths |
-| `GET` | `/api/roadmap/:pathId` | Full path with nodes |
-| `DELETE` | `/api/roadmap/:pathId` | Delete a path |
-| `PATCH` | `/api/roadmap/:pathId` | Rename topic / goal |
-| `POST` | `/api/roadmap/:pathId/node/:week/resources` | Tavily fetch for a week |
-| `POST` | `/api/roadmap/:pathId/node/:week/quiz` | First-time quiz generation (cached) |
-| `POST` | `/api/roadmap/:pathId/node/:week/retry` | Adaptive retry: review resources + focused quiz |
-| `POST` | `/api/roadmap/:pathId/node/:week/evaluate` | Score answers, persist weak concepts |
-| `GET` | `/api/roadmap/weak-concepts?topic=…` | Pinecone-backed weak concepts list |
+| `POST` | `/register` | Create user, return JWT *(no auth)* |
+| `POST` | `/login` | Email/password sign-in, return JWT *(no auth)* |
+| `POST` | `/google` | Sign in with Google access token, return JWT *(no auth)* |
+| `POST` | `/forgot-password` | Send reset email; always 200 (no enumeration) *(no auth)* |
+| `POST` | `/reset-password` | Token + new password → set + sign in *(no auth)* |
+| `GET` | `/me` | Full profile: avatarUrl, googleLinked, hasPassword, createdAt |
+| `PATCH` | `/me` | Update display name |
+| `POST` | `/change-password` | Verify current pwd (if any), set new |
+
+### Roadmap (`/api/roadmap`)
+
+| Method | Path | What it does |
+|---|---|---|
+| `POST` | `/generate` | One-shot roadmap generation (returns when done) |
+| `POST` | `/generate-stream` | SSE: streams per-node progress |
+| `GET` | `/my-paths` | List the user's paths with node summaries |
+| `GET` | `/:pathId` | Full path with nodes |
+| `DELETE` | `/:pathId` | Delete a path |
+| `PATCH` | `/:pathId` | Rename topic / goal |
+| `POST` | `/:pathId/node/:week/resources` | Tavily fetch for a week |
+| `POST` | `/:pathId/node/:week/quiz` | First-time quiz generation (cached) |
+| `POST` | `/:pathId/node/:week/retry` | Adaptive retry: review resources + focused quiz |
+| `POST` | `/:pathId/node/:week/evaluate` | Score answers, persist weak concepts |
+| `GET` | `/weak-concepts?topic=…` | Pinecone-backed weak concepts list |
+
+## Tests
+
+```bash
+cd server && npm test
+```
+
+15 vitest specs cover the evaluator (scoring, pass/fail, week unlocking,
+wrong-concept tagging, final-week pathComplete) and the memory service
+(Pinecone upsert shape, topic-filtered queries, defensive handling of empty
+matches). The LLM-calling nodes (planner, researcher, quiz) aren't unit
+tested — they're verified end-to-end via the demo flow.
 
 ## Notes
 
 - `quizQuestions` are cached on the node — re-visiting a week doesn't burn
-  OpenAI credits.
+  OpenAI credits. The retry route overwrites them with a new focused set.
 - The `concept` field on each generated quiz question is what the Evaluator
   reads when storing weak concepts. Paths generated before that field was added
   fall back to a topic-rotation heuristic.
-- Pinecone failures are non-fatal: the `memoryLoaderNode` swallows errors and
+- Pinecone failures are non-fatal: the memory loader node swallows errors and
   the graph proceeds with empty `historicalWeakConcepts`. Memory is a soft
   signal, not a hard dependency.
 - The streaming endpoint uses SSE via `fetch` + `ReadableStream` (not
   `EventSource`) so the JWT can travel in an `Authorization` header rather than
   a query param.
+- Google OAuth uses the implicit `access_token` flow (not ID token) so we can
+  render our own button. The backend validates `audience === GOOGLE_CLIENT_ID`
+  via `getTokenInfo()` to prevent tokens from other apps being replayed.
+- `forgot-password` always returns 200 OK even if the email isn't registered,
+  to prevent email enumeration.
+- The server installs `process.on('unhandledRejection', …)` and
+  `'uncaughtException'` handlers as last-resort guards — third-party SDKs
+  (Resend in particular) can fire async rejections after we've already handled
+  the error path, which would otherwise crash the process.
